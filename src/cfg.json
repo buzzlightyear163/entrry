@@ -1,1 +1,83 @@
-{"ticker": "$ENTRY", "theme": "graphite", "user": "anon", "host": "entry", "object": "watch", "command": "before the tweet", "sub": "their entry. not your exit.", "layout": "mono", "decor": ["grid"], "list": ["entry watch --kols", "kol wallets watched every block", "you enter the second they do", "buy-to-call gap logged per kol", "live feed open to holders only"], "chips": {"label": "follow", "items": ["all kols", "fastest gap", "top 10", "my list"], "on": 1}, "split": {"label": "where the desk profit goes", "rows": [["60", "buyback + burn $ENTRY", "red"], ["30", "back into the desk", "acc"], ["10", "rpc + infra", ""]]}, "launch": {"cmd": "entry watch --kols", "lines": ["kol wallets watched", "gap log recording", "holder feed open"], "window": "entry \u2014 kols.log"}, "bigSize": 4.3}
+{
+ "ticker": "$ENTRY",
+ "theme": "graphite",
+ "user": "anon",
+ "host": "entry",
+ "object": "watch",
+ "command": "before the tweet",
+ "sub": "their entry. not your exit.",
+ "layout": "term",
+ "decor": [
+  "grid"
+ ],
+ "list": [
+  "entry watch --kols",
+  "kol wallets watched every block",
+  "you enter the second they do",
+  "buy-to-call gap logged per kol",
+  "live feed open to holders only"
+ ],
+ "chips": {
+  "label": "follow",
+  "items": [
+   "all kols",
+   "fastest gap",
+   "top 10",
+   "my list"
+  ],
+  "on": 1
+ },
+ "split": {
+  "label": "where the desk profit goes",
+  "rows": [
+   [
+    "60",
+    "buyback + burn $ENTRY",
+    "red"
+   ],
+   [
+    "30",
+    "back into the desk",
+    "acc"
+   ],
+   [
+    "10",
+    "rpc + infra",
+    ""
+   ]
+  ]
+ },
+ "launch": {
+  "cmd": "entry watch --kols",
+  "lines": [
+   "kol wallets watched",
+   "gap log recording",
+   "holder feed open"
+  ],
+  "window": "entry \u2014 kols.log"
+ },
+ "bigSize": 4.3,
+ "bannerTerm": {
+  "window": "kols.log",
+  "lines": [
+   [
+    "14:02:07",
+    "buy ",
+    "kol 03 \u00b7 4.20 SOL",
+    "acc"
+   ],
+   [
+    "14:16:39",
+    "call",
+    "kol 03 \u00b7 gap +14m 32s",
+    ""
+   ],
+   [
+    "14:19:51",
+    "exit",
+    "kol 03 \u00b7 6.10 SOL",
+    "red"
+   ]
+  ]
+ }
+}

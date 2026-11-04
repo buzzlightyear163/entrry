@@ -25,6 +25,9 @@ body{background:#777;font-family:"JetBrains Mono",monospace;display:flex;flex-di
 .chip.on{background:var(--accent);color:var(--bg)}
 .row b{display:inline-block;width:2.4em;font-weight:700}
 .L-mono .p0{font-size:21px} .L-mono .big{font-size:84px;font-weight:500;letter-spacing:-.02em;margin-top:6px;white-space:nowrap} .L-mono .sub{font-size:19px;margin-top:16px}
+.L-term .p0{font-size:20px} .L-term .big{font-weight:500;letter-spacing:-.02em;margin-top:8px;white-space:nowrap;line-height:1.05} .L-term .sub{font-size:19px;margin-top:16px}
+.f>.bterm{position:absolute;right:50px;top:50%;transform:translateY(-50%);width:380px;font-size:16px;margin:0}
+.bterm .body div{white-space:pre}
 .L-big .eyebrow{font-family:Silkscreen;font-size:15px;letter-spacing:.12em}
 .L-big .tag{font-family:Silkscreen;font-size:34px;margin-top:22px;white-space:nowrap}
 /* launch + og share one layout, scaled by font-size */
@@ -97,22 +100,28 @@ function place(f, ctx, obj, cell, cx, cy, opts = {}) { // draw object with its c
   place(f, ctx, C.object, cell, 500, 500, { shadow: C.pfpShadow ?? true }); }
 
 // ---- BANNER ----
-{ const f = banner; f.classList.add("L-" + C.layout); const ctx = TK.canvasFor(f); decor(f, ctx, 1500, 500);
+// Never draws the pfp object: X lays the avatar over the bottom-left (x 40-375, y 330-500 at 1500x500),
+// so the same object would sit on top of itself. Text starts at x 430; the left third stays decor only.
+{ const f = banner; f.classList.add("L-" + C.layout); const ctx = TK.canvasFor(f);
+  decor(f, ctx, 1500, 500, C.layout === "big" ? .62 : .3);
+  const L0 = 430, fit = (el, max, fs, min = 30) => { el.style.fontSize = fs + "px"; while (el.scrollWidth > max && fs > min) el.style.fontSize = (fs -= 2) + "px"; };
   if (C.layout === "big") {
-    f.insertAdjacentHTML("beforeend", `<div class="txt" style="left:90px"><div class="eyebrow mut">${esc(C.eyebrow)}</div><canvas id="ledc" style="margin-top:20px;image-rendering:pixelated"></canvas><div class="tag">${esc(C.tag || C.command)}<span class="cur"></span></div></div>`);
+    f.insertAdjacentHTML("beforeend", `<div class="txt" style="left:${L0}px"><div class="eyebrow mut">${esc(C.eyebrow)}</div><canvas id="ledc" style="margin-top:20px;image-rendering:pixelated"></canvas><div class="tag">${esc(C.tag || C.command)}<span class="cur"></span></div></div>`);
     const lk = 9, lw = TK.textWidth(tick) * 2 * lk + 30, lh = 10 * lk + 30, d = devicePixelRatio;
     ledc.width = lw * d; ledc.height = lh * d; ledc.style.width = lw + "px"; ledc.style.height = lh + "px"; ledc.style.margin = "5px -15px -15px";
     const lc = ledc.getContext("2d"); lc.scale(d, d); TK.led(lc, tick, { x: 15, y: 15, cell: lk, color: T.accent, glow: glowOn, dim: true });
-    place(f, ctx, C.object, 6, 1120, 255);
-  } else if (C.layout === "mono") {
-    place(f, ctx, C.object, 7, 245, 205);
-    f.insertAdjacentHTML("beforeend", `<div class="txt" style="left:520px"><div class="p0">${prompt}</div><div class="big">${esc(C.command)}<span class="cur"></span></div><div class="sub mut">${esc(C.sub)}</div></div>`);
-  } else { // readme
-    place(f, ctx, C.object, 6, 215, 200);
+  } else if (C.layout === "readme") {
     const list = C.list.map((l, i) => i === 0 ? `<div class="acc">$ ${esc(l)}</div>` : `<div><span class="acc">✓</span> ${esc(l)}</div>`).join("");
     const chips = C.chips ? `<div class="h mut"># ${esc(C.chips.label)}</div><div>${C.chips.items.map((c, i) => `<span class="chip ${i === C.chips.on ? "on" : "mut"}">${esc(c)}</span>`).join("")}</div>` : "";
     const split = C.split ? `<div class="h mut"># ${esc(C.split.label)}</div>` + C.split.rows.map(r => `<div class="row"><b class="${r[2] || "ink"}">${esc(r[0])}</b>${esc(r[1])}</div>`).join("") : "";
-    f.insertAdjacentHTML("beforeend", `<div class="txt" style="left:470px"><div class="p1">${prompt} ${esc(C.command)}<span class="cur"></span></div><div class="sub mut">${esc(C.sub)}</div><div class="cols"><div>${list}</div><div>${chips}${split}</div></div></div>`);
+    f.insertAdjacentHTML("beforeend", `<div class="txt" style="left:${L0}px"><div class="p1">${prompt} ${esc(C.command)}<span class="cur"></span></div><div class="sub mut">${esc(C.sub)}</div><div class="cols"><div>${list}</div><div>${chips}${split}</div></div></div>`);
+    fit(f.querySelector(".p1"), 1440 - L0, 40, 26);
+  } else { // term (default): command left, a terminal with the product's story on the right
+    const B = C.bannerTerm || { window: (C.launch.window || C.host + " — zsh"), lines: (C.launch.lines || []).map(l => ["", "✓", l, "acc"]) };
+    const rows = B.lines.map(([t, k, txt, cls]) => `<div>${t ? `<span class="mut">${esc(t)}</span>  ` : ""}<span class="${cls || "ink"}">${esc(k)}</span> ${esc(txt)}</div>`).join("");
+    f.insertAdjacentHTML("beforeend", `<div class="txt" style="left:${L0}px;right:${1500 - 1010}px"><div class="p0">${prompt}</div><div class="big">${esc(C.command)}<span class="cur"></span></div><div class="sub mut">${esc(C.sub)}</div></div>
+      <div class="term bterm"><div class="bar"><i></i><i></i><i></i><span class="mut">${esc(B.window)}</span></div><div class="body">${rows}</div></div>`);
+    fit(f.querySelector(".big"), 1010 - L0, 64);
   }
 }
 

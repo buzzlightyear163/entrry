@@ -16,4 +16,11 @@ with sync_playwright() as p:
         if errs: print("errors:", errs)
         pg.close()
     b.close()
+# X profile preview: the avatar over the bottom-left of the banner, as X shows it. Check this before delivering.
+from PIL import Image, ImageDraw
+b = Image.open(out / "banner.png").convert("RGB").resize((1500, 500)); a = Image.open(out / "pfp.png").convert("RGB")
+d, left, top = 333, 40, 500 - 333 // 2; S = Image.new("RGB", (1500, 690), "#000"); S.paste(b, (0, 0))
+m = Image.new("L", (d, d), 0); ImageDraw.Draw(m).ellipse((0, 0, d - 1, d - 1), fill=255)
+ImageDraw.Draw(S).ellipse((left - 8, top - 8, left + d + 8, top + d + 8), fill="#000"); S.paste(a.resize((d, d)), (left, top), m)
+S.save(out / "x-profile.png")
 print("ok", sorted(x.name for x in out.glob("*.png")))
