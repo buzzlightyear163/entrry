@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en" data-theme="graphite">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ENTRY — their entry. not your exit.</title>
+<meta name="description" content="ENTRY watches KOL wallets and sees the buy the second it lands, before the tweet. Then it logs how long they waited to call it.">
+<meta name="theme-color" content="#131210">
+<meta property="og:title" content="ENTRY — their entry. not your exit."><meta property="og:description" content="KOL wallets, watched live. See the buy before the tweet.">
+<meta property="og:type" content="website"><meta property="og:image" content="/og.png">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="/og.png">
+<link rel="icon" href="/fav.png"><link rel="apple-touch-icon" href="/fav.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<style>
+/* ENTRY: project components on top of the termkit system */
+.k-buy{color:var(--accent);text-shadow:var(--glow)} .k-sell{color:var(--red)}
+.redact{color:var(--faint);letter-spacing:-.12em;user-select:none}
+.pv{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);border:1px solid var(--hair);padding:0 .45em;align-self:center;line-height:1.6}
+.lock{display:inline-block;padding:.12em .6em;font-size:11px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);color:var(--muted)}
+.lock.open{background:var(--accent);color:var(--bg);border-color:var(--accent);box-shadow:var(--glow)}
+.gate{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:34px}
+.gate .msg{font-size:12px;color:var(--muted);flex:1;min-width:220px}
+input.tk{width:100%;background:var(--bg);color:var(--ink);border:1.5px solid var(--line);border-radius:var(--r);font:13px var(--mono);padding:.7em .8em;outline:none;color-scheme:dark}
+input.tk:focus{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+input.tk::placeholder{color:var(--faint)}
+.fld{display:block;margin-bottom:14px} .fld span{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.watch{display:flex;gap:10px;margin-top:18px} .watch input:first-child{flex:2} .watch input:nth-child(2){flex:1}
+.wl{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;font-size:12px;color:var(--muted)}
+.wl span{border:1px solid var(--hair);padding:.1em .5em} .wl button{background:none;border:0;color:var(--faint);cursor:pointer;font:inherit;margin-left:.45em} .wl button:hover{color:var(--red)}
+.gapv{font-size:clamp(44px,6.4vw,72px);font-weight:500;letter-spacing:-.045em;line-height:1;margin:14px 0 6px}
+.verdict{font-size:14px;color:var(--muted)}
+canvas#card{width:100%;aspect-ratio:1200/630;display:block;border:1.5px solid var(--line);box-shadow:6px 6px 0 var(--shadow)}
+.board{font-size:13px;margin-top:8px}
+.board .hd,.board .r{display:grid;grid-template-columns:1.1fr .6fr .9fr .9fr 1.5fr;gap:14px;padding:11px 0;border-bottom:1px dashed var(--hair);align-items:center}
+.board .hd{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.board .bar{height:10px;background:repeating-linear-gradient(90deg,var(--accent) 0 6px,transparent 6px 8px);box-shadow:none}
+.vs .hd,.vs .r{display:grid;grid-template-columns:1fr 64px 64px;gap:12px;padding:9px 0;border-bottom:1px dashed var(--hair);font-size:13px}
+.vs .hd{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.ctl{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--hair);font-size:13px}
+.ctl .l{color:var(--muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.ctl .rg{display:flex;align-items:center;gap:12px} .ctl output{min-width:5.5em;text-align:right}
+input[type=range]{accent-color:var(--accent);width:100%}
+.out{min-height:9.5em}
+.out div{white-space:pre-wrap}
+@media (max-width:860px){
+  .board .hd,.board .r{grid-template-columns:1fr .5fr 1fr} .board .hide{display:none}
+  .ctl{grid-template-columns:1fr;gap:6px} .watch{flex-direction:column}
+  .log div>:nth-child(4){display:none} .log{font-size:11.5px} .log div{grid-template-columns:52px 34px 1fr;gap:8px}
+  .prompt{font-size:13px}
+  .hero-vis{height:auto;padding-top:300px} .hero-vis .term{position:relative;right:auto;bottom:auto;width:100%}
+}
+.top .wrap>.btn{margin-left:auto}
+</style>
+</head>
+<body>
+<canvas id="bgtape"></canvas>
+
+<header class="top" id="top"><div class="wrap">
+  <a class="brand" href="#hero"><canvas id="logo"></canvas>entry</a>
+  <nav class="nav"><a href="#how">how</a><a href="#live">live</a><a href="#gap">gap</a><a href="#desk">desk</a><a href="#fees">fees</a><a href="#token">token</a><a href="#faq">faq</a></nav>
+  <a class="btn" id="buyTop" href="#token">buy</a>
+</div></header>
+
+<section class="hero" id="hero">
+  <canvas class="hero-bg" id="heroBg" style="position:absolute;inset:0;width:100%;height:100%;z-index:0"></canvas>
+  <div class="wrap">
+    <div>
+      <div class="prompt"><span>anon@entry ~ %</span> <span class="cmd" id="typed"></span><span class="cur"></span></div>
+      <h1>their entry.<br><b>not your exit.</b></h1>
+      <p class="lede">ENTRY watches the public wallets of KOLs and sees the buy the second it lands, before the tweet. Then it logs how long they waited to tell you.</p>
+      <div class="ctas"><a class="btn pri" href="#live">open the feed →</a><a class="btn" href="#gap">check a call</a></div>
+      <div class="ca"><span>ca</span><code id="ca">posted here and on X at launch</code><button class="chip" id="copy" hidden>copy</button></div>
+    </div>
+    <div class="hero-vis" id="heroVis">
+      <div class="term"><div class="bar"><i></i><i></i><i></i><span>kols.log</span></div>
+        <div class="body" id="mini"></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="strip"><div class="run" id="strip"></div></div>
+
+<section class="s pin" id="how"><div class="stick"><div class="wrap">
+  <div class="eyebrow"><b>01</b> · how it works <i></i></div>
+  <h2><span class="pr">%</span>entry watch --kols</h2>
+  <p class="lede">A KOL buys. The chain knows before the timeline does. Five things happen, in order.</p>
+  <div class="steps">
+    <ol class="steplist" id="steplist">
+      <li><b>01</b>a kol buys from a public wallet</li><li><b>02</b>entry sees it as it lands</li><li><b>03</b>the desk enters at their price</li><li><b>04</b>the call goes out on X, later</li><li><b>05</b>the gap goes on their record</li>
+    </ol>
+    <div class="term"><div class="bar"><i></i><i></i><i></i><span>entry — zsh</span></div>
+      <div class="body" id="stepterm">
+        <div class="ln"><span class="mut">anon@entry ~ %</span> entry watch --kols</div>
+        <div class="ln"><span class="ok">✓</span> kol 03 bought 4.20 SOL · 14:02:07</div>
+        <div class="ln"><span class="ok">✓</span> seen on the curve · tx on solscan</div>
+        <div class="ln"><span class="ok">✓</span> desk in at 0.50 SOL · their price <span class="mut">(beta)</span></div>
+        <div class="ln"><span class="ok">✓</span> call posted 14:16:39 · gap <span class="acc">+14m 32s</span></div>
+      </div></div>
+  </div>
+  <div class="meter">step <span id="stepn">0</span> / 5</div>
+</div></div></section>
+
+<section class="s" id="live"><div class="wrap">
+  <div class="eyebrow"><b>02</b> · live feed <i></i></div>
+  <h2><span class="pr">%</span>tail -f kols.log</h2>
+  <p class="lede">Buys and exits from known KOL wallets, live off pump.fun. Everyone sees that they moved. Holders see what. <span class="lamp" id="lamp">preview</span></p>
+  <div class="card gate">
+    <span class="lock" id="lock">locked</span>
+    <span class="msg" id="gateMsg">hold <span id="gmin"></span> $ENTRY to open the token and the tx on every row.</span>
+    <button class="btn" id="peek">peek holder view</button>
+    <button class="btn pri" id="connect">connect wallet</button>
+  </div>
+  <div class="card" style="margin-top:22px"><div class="log" id="log"></div></div>
+  <div class="watch">
+    <input class="tk" id="wAddr" placeholder="add a wallet to watch · solana address" autocomplete="off" spellcheck="false">
+    <input class="tk" id="wLabel" placeholder="label (optional)" autocomplete="off" maxlength="18">
+    <button class="btn" id="wAdd">watch</button>
+  </div>
+  <div class="wl" id="wl"></div>
+</div></section>
+
+<section class="s" id="gap"><div class="wrap">
+  <div class="eyebrow"><b>03</b> · the gap <i></i></div>
+  <h2><span class="pr">%</span>entry gap &lt;call&gt; &lt;tx&gt;</h2>
+  <p class="lede">Paste the call and the KOL's buy. ENTRY reads the time straight out of the post id and the block time off the chain, then tells you how early they were.</p>
+  <div class="grid g2" style="margin-top:34px;align-items:start">
+    <div class="card">
+      <label class="fld"><span>the call · x post link</span><input class="tk" id="gTweet" placeholder="https://x.com/…/status/1850…" autocomplete="off" spellcheck="false"></label>
+      <label class="fld"><span>their buy · tx signature or solscan link</span><input class="tk" id="gTx" placeholder="5Kq3…  or  solscan.io/tx/…" autocomplete="off" spellcheck="false"></label>
+      <label class="fld" id="manual" hidden><span>or the buy time · utc</span><input class="tk" id="gTime" type="datetime-local" step="1"></label>
+      <div class="ctas" style="margin-top:6px"><button class="btn pri" id="measure">measure the gap</button><button class="btn" id="example">load an example</button></div>
+    </div>
+    <div class="term"><div class="bar"><i></i><i></i><i></i><span>entry gap</span></div>
+      <div class="body out" id="gOut"><div class="mut">anon@entry ~ % entry gap</div><div class="mut">waiting for a call and a tx.</div></div></div>
+  </div>
+  <div id="gRes" class="grid g2" style="margin-top:44px;align-items:center" hidden>
+    <div>
+      <div class="eyebrow">the gap <i></i></div>
+      <div class="gapv acc" id="gVal"></div>
+      <div class="verdict" id="gVerdict"></div>
+      <div class="ctas"><button class="btn pri" id="save">save card</button><a class="btn" id="post" target="_blank" rel="noopener">post on X</a></div>
+    </div>
+    <canvas id="card"></canvas>
+  </div>
+
+  <div style="margin-top:80px">
+    <div class="eyebrow"><b>03b</b> · gap board <i></i></div>
+    <h2 style="font-size:clamp(24px,3vw,32px)"><span class="pr">%</span>entry board --by gap</h2>
+    <p class="lede">How long each KOL usually holds before the call. Every line is a logged call: a post and a buy you can open. <span class="lamp" id="bLamp">preview</span></p>
+    <div class="board card" style="margin-top:24px" id="board"></div>
+  </div>
+</div></section>
+
+<section class="s" id="desk"><div class="wrap">
+  <div class="eyebrow"><b>04</b> · the desk <i></i></div>
+  <h2><span class="pr">%</span>entry desk --arm</h2>
+  <p class="lede">The desk enters with them at their price, and gets out the second they start selling. It's in beta: you can arm it now, nothing executes and no funds move until beta opens.</p>
+  <div class="grid g2" style="margin-top:34px;align-items:start">
+    <div class="card" id="deskCtl">
+      <div class="ctl"><span class="l">follow</span><div data-g="follow"><button class="chip">all kols</button><button class="chip on">fastest gap</button><button class="chip">top 10</button><button class="chip">my list</button></div></div>
+      <div class="ctl"><span class="l">size</span><div class="rg"><input type="range" id="dSize" min="0.1" max="2" step="0.05" value="0.5"><output id="dSizeO">0.50 SOL</output></div></div>
+      <div class="ctl"><span class="l">take profit</span><div data-g="tp"><button class="chip">2x</button><button class="chip on">3x</button><button class="chip">5x</button><button class="chip">none</button></div></div>
+      <div class="ctl"><span class="l">exit</span><div data-g="exit"><button class="chip on">when they sell</button><button class="chip">at take profit</button></div></div>
+      <div class="ctl" style="border-bottom:0"><span class="l">max a day</span><div class="rg"><input type="range" id="dMax" min="1" max="20" step="1" value="6"><output id="dMaxO">6 entries</output></div></div>
+      <div class="ctas" style="margin-top:14px"><button class="btn pri" id="arm">arm the desk</button><span class="lamp" id="dLamp" style="align-self:center">beta</span></div>
+    </div>
+    <div class="term"><div class="bar"><i></i><i></i><i></i><span>desk.log</span></div>
+      <div class="body out" id="dOut"></div></div>
+  </div>
+</div></section>
+
+<section class="s" id="fees"><div class="wrap">
+  <div class="eyebrow"><b>05</b> · where the profit goes <i></i></div>
+  <h2><span class="pr">%</span>entry fees --split</h2>
+  <p class="lede">Creator fees fund the desk. When the desk closes an entry in profit, every $1.00 splits the same way, and most of it buys $ENTRY back.</p>
+  <div class="split"><div style="flex:60;--c:var(--red)"></div><div style="flex:30;--c:var(--accent)"></div><div style="flex:10;--c:var(--faint)"></div></div>
+  <div class="rows"><div><b class="red">$0.60</b>buyback + burn $ENTRY</div><div><b class="acc">$0.30</b>back into the desk</div><div><b>$0.10</b>rpc + infra: keeping the feed fast</div></div>
+  <div class="grid g3" style="margin-top:40px">
+    <div class="card lift stat"><div class="k">api keys needed</div><div class="v">0</div></div>
+    <div class="card lift stat"><div class="k">post time</div><div class="v">from the id</div></div>
+    <div class="card lift stat"><div class="k">every row</div><div class="v acc">on-chain</div></div>
+  </div>
+</div></section>
+
+<section class="s" id="token"><div class="wrap">
+  <div class="eyebrow"><b>06</b> · token <i></i></div>
+  <h2><span class="pr">%</span>entry token</h2>
+  <div class="grid g2" style="margin-top:34px;align-items:start">
+    <div class="card"><div class="rows">
+      <div><span class="mut" style="width:9em">ticker</span>$ENTRY</div><div><span class="mut" style="width:9em">chain</span>solana · pump.fun</div>
+      <div><span class="mut" style="width:9em">supply</span>1,000,000,000</div><div><span class="mut" style="width:9em">feed key</span><span id="gmin2"></span> $ENTRY</div></div>
+      <div class="ctas"><a class="btn pri" id="buy" href="#">buy on pump.fun</a><a class="btn" id="xlink" href="#">follow on X</a></div></div>
+    <div class="card vs"><div class="mut" style="font-size:12px;margin-bottom:8px"># what holding opens</div>
+      <div class="hd"><span></span><span>public</span><span>holders</span></div>
+      <div class="r"><span>that a kol bought or sold</span><span class="acc">✓</span><span class="acc">✓</span></div>
+      <div class="r"><span>which token, and the tx</span><span class="redact">███</span><span class="acc">✓</span></div>
+      <div class="r"><span>gap check + gap board</span><span class="acc">✓</span><span class="acc">✓</span></div>
+      <div class="r"><span>the desk, when beta opens</span><span class="mut">—</span><span class="acc">✓</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="s" id="faq"><div class="wrap">
+  <div class="eyebrow"><b>07</b> · faq <i></i></div>
+  <h2><span class="pr">%</span>man entry</h2>
+  <div class="man" style="margin-top:28px">
+    <details open><summary>is this financial advice?</summary><p>No. ENTRY shows what public wallets did on-chain. It never tells you to buy, and a KOL buying is not a reason to.</p></details>
+    <details><summary>whose wallets are these?</summary><p>Only wallets a KOL has shown publicly, or that are publicly tied to them. Every row links to the transaction so anyone can check it. If a wallet is wrong, it comes off the list.</p></details>
+    <details><summary>does the desk trade for me today?</summary><p>No. The feed and the gap check are live. The desk is in beta: you can arm it, but nothing executes and no funds move until beta opens.</p></details>
+    <details><summary>why holders only?</summary><p>The feed is the product and $ENTRY is the key. Everyone can see that a KOL moved. Holders see what they moved into.</p></details>
+    <details><summary>what can't it see?</summary><p>It reads trades on the pump.fun curve from wallets on the list. A KOL buying from a fresh wallet, on another venue or through a bundle won't show. And getting in at their price doesn't stop them from selling first.</p></details>
+    <details><summary>will entry DM me?</summary><p>Never. Anyone who does is not us.</p></details>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="big">their entry.<br>not your <b>exit.</b><span class="cur"></span></div>
+  <div class="ctas"><a class="btn pri" href="#live">open the feed</a><a class="btn" href="#gap">check a call</a></div>
+  <div class="fine"><span>$ENTRY · solana</span><span>not financial advice</span><span id="cafoot"></span></div>
+</div></footer>
+
+<script src="termkit.js"></script>
+<script>
+const CONFIG = {
+  ca: "", x: "https://x.com/", dexscreener: "", site: "", ticker: "$ENTRY", object: "watch", theme: document.documentElement.dataset.theme,
+  holderMin: 500000,                                   // $ENTRY a wallet needs to open the feed
+  rpc: ["https://solana-rpc.publicnode.com", "https://api.mainnet-beta.solana.com"], // free, no keys. Put your own first if you get one.
+  // Only wallets the KOL has shown publicly, or that are publicly tied to them.
+  kols: [
+    // { handle: "@handle", wallet: "SolanaWalletAddress" },
+  ],
+  // Logged calls for the gap board: the call post + the KOL's buy tx. Times come from the post id and the chain.
+  calls: [
+    // { handle: "@handle", tweet: "https://x.com/handle/status/1850000000000000000", tx: "5Kq…signature" },
+  ],
+};
+const T = TK.THEMES[CONFIG.theme];
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const short = a => a ? a.slice(0, 4) + "…" + a.slice(-4) : "";
+const fmt = n => Math.round(n).toLocaleString("en-US");
+const now = () => new Date().toTimeString().slice(0, 8);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const store = { get(k, d) { try { return JSON.parse(localStorage.getItem("entry." + k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("entry." + k, JSON.stringify(v)); } catch {} } };
+const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+const isAddr = s => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
+const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
+const fake = (n, end = "") => Array.from({ length: n }, () => pick(B58)).join("") + end;
+
+// ---------- CA + links ----------
+if (CONFIG.ca) { $("#ca").textContent = CONFIG.ca; $("#copy").hidden = false; $("#cafoot").textContent = "ca " + CONFIG.ca;
+  $("#copy").onclick = () => navigator.clipboard.writeText(CONFIG.ca).then(() => $("#copy").textContent = "copied");
+  ["#buy", "#buyTop"].forEach(s => $(s).href = "https://pump.fun/coin/" + CONFIG.ca); }
+$("#xlink").href = CONFIG.x;
+["#gmin", "#gmin2"].forEach(s => $(s).textContent = fmt(CONFIG.holderMin));
+
+// ---------- logo + hero object + background line ----------
+{ const g = TK.OBJECTS[CONFIG.object]({ ticker: CONFIG.ticker }), c = $("#logo"), k = 2;
+  c.width = g.w * k; c.height = g.h * k; const x = c.getContext("2d"); TK.draw(x, g, { theme: T, cell: k, x: 0, y: 0, shadow: false });
+  c.style.width = Math.round(26 * g.w / g.h) + "px"; }
+function drawHero() {
+  const hero = $("#hero"), c = $("#heroBg"), d = devicePixelRatio || 1, r = hero.getBoundingClientRect(), a = $("#heroVis").getBoundingClientRect();
+  c.width = r.width * d; c.height = r.height * d; const x = c.getContext("2d"); x.scale(d, d); x.imageSmoothingEnabled = false;
+  const g = TK.OBJECTS[CONFIG.object]({ ticker: CONFIG.ticker });
+  const mob = matchMedia("(max-width:860px)").matches, ah = mob ? a.height - $("#heroVis .term").offsetHeight - 24 : a.height;
+  const cell = Math.max(3, Math.floor(Math.min(a.width * .7 / g.w, ah * (mob ? .9 : .7) / g.h)));
+  const ox = a.left - r.left + (a.width - g.w * cell) * (mob ? .5 : .12), oy = a.top - r.top + (ah - g.h * cell) * (mob ? .5 : .1);
+  TK.draw(x, g, { theme: T, cell, x: ox, y: oy, shadowLen: 1600 });
+}
+drawHero(); addEventListener("resize", drawHero); document.fonts.ready.then(drawHero);
+function drawBg() { const c = $("#bgtape"), d = devicePixelRatio || 1; c.width = innerWidth * d; c.height = 140 * d;
+  const x = c.getContext("2d"); x.scale(d, d); x.fillStyle = T.muted; let y = 70, s = 7;
+  for (let i = 0; i < innerWidth; i += 4) { s = s * 16807 % 2147483647; y += (s / 2147483647 - .5) * 6 + (70 - y) * .02; x.globalAlpha = .45; x.fillRect(i, y, 2, 2); } }
+drawBg(); addEventListener("resize", drawBg);
+
+// ---------- typed prompt + strip ----------
+{ const cmd = "entry watch --kols --live", el = $("#typed"); if (reduce) el.textContent = cmd;
+  else { let i = 0; const t = setInterval(() => { el.textContent = cmd.slice(0, ++i); if (i >= cmd.length) clearInterval(t); }, 70); } }
+{ const facts = ["their entry. not your exit.", "buy lands → entry sees it → call goes out → gap logged", "every row links to solscan", "0 api keys", "holders see the token", "the desk gets out when they sell", "post time read from the post id", "profit buys back $ENTRY"];
+  $("#strip").innerHTML = [0, 1].map(() => facts.map(f => `<span><span class="acc">›</span> ${esc(f)}</span>`).join("")).join(""); }
+
+// ---------- chain ----------
+async function rpc(method, params) { let last;
+  for (const url of CONFIG.rpc) { try {
+    const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
+    const j = await r.json(); if (j.error) throw new Error(j.error.message || "rpc error"); return j.result;
+  } catch (e) { last = e; } } throw last || new Error("no rpc"); }
+const EPOCH = 1288834974657n;
+function postTime(s) { const m = String(s).trim().match(/status(?:es)?\/(\d{15,20})/) || String(s).trim().match(/^(\d{15,20})$/); return m ? Number((BigInt(m[1]) >> 22n) + EPOCH) : null; }
+function sigOf(s) { s = String(s).trim(); const m = s.match(/tx\/([1-9A-HJ-NP-Za-km-z]{64,90})/); if (m) return m[1]; return /^[1-9A-HJ-NP-Za-km-z]{64,90}$/.test(s) ? s : null; }
+async function buyTime(sig) { const tx = await rpc("getTransaction", [sig, { maxSupportedTransactionVersion: 0, encoding: "json", commitment: "confirmed" }]);
+  if (!tx || !tx.blockTime) throw new Error("tx not found"); return { t: tx.blockTime * 1000, slot: tx.slot, signer: tx.transaction?.message?.accountKeys?.[0] }; }
+const utc = t => new Date(t).toISOString().slice(0, 19).replace("T", " ") + " utc";
+function gapLabel(d) { const a = Math.abs(d) / 1000, sg = d >= 0 ? "+" : "−", p = n => String(Math.floor(n)).padStart(2, "0");
+  if (a >= 86400) return `${sg}${Math.floor(a / 86400)}d ${p(a % 86400 / 3600)}h`;
+  if (a >= 3600) return `${sg}${Math.floor(a / 3600)}h ${p(a % 3600 / 60)}m ${p(a % 60)}s`;
+  if (a >= 60) return `${sg}${Math.floor(a / 60)}m ${p(a % 60)}s`; return `${sg}${Math.floor(a)}s`; }
+
+// ---------- holder gate ----------
+const gate = { open: false, peek: false };
+const canSee = r => gate.open || (r.preview && gate.peek);
+function gateMsg(t) { $("#gateMsg").textContent = t; }
+function setGate() { const L = $("#lock"); L.className = "lock" + (gate.open || gate.peek ? " open" : "");
+  L.textContent = gate.open ? "open" : gate.peek ? "peek" : "locked"; $("#peek").textContent = gate.peek ? "back to public view" : "peek holder view"; redraw(); }
+$("#peek").onclick = () => { gate.peek = !gate.peek; if (gate.peek && !gate.open) gateMsg("peek shows the holder view on preview rows only."); setGate(); };
+$("#connect").onclick = async () => {
+  const p = window.phantom?.solana || window.solflare || window.backpack || window.solana;
+  if (!p) return gateMsg("no solana wallet found in this browser.");
+  if (!CONFIG.ca) return gateMsg("the gate opens at launch. preview until then.");
+  try { const r = await p.connect(); const pk = (r?.publicKey || p.publicKey).toString(); gateMsg("checking " + short(pk) + " …");
+    const res = await rpc("getTokenAccountsByOwner", [pk, { mint: CONFIG.ca }, { encoding: "jsonParsed" }]);
+    const bal = (res?.value || []).reduce((s, a) => s + (+a.account.data.parsed.info.tokenAmount.uiAmount || 0), 0);
+    gate.open = bal >= CONFIG.holderMin;
+    gateMsg(gate.open ? `${short(pk)} holds ${fmt(bal)} $ENTRY. the feed is open.` : `${short(pk)} holds ${fmt(bal)} $ENTRY. ${fmt(CONFIG.holderMin)} opens the feed.`);
+    $("#connect").textContent = short(pk); setGate();
+  } catch (e) { gateMsg("couldn't check that wallet. " + (e?.message || "try again.")); }
+};
+
+// ---------- live feed ----------
+const rows = [];
+const watch = { kols: CONFIG.kols.filter(k => isAddr(k.wallet || "")), mine: store.get("watch", []).filter(k => isAddr(k.wallet)) };
+const keys = () => [...new Set([...watch.kols.map(k => k.wallet), ...watch.mine.map(k => k.wallet)])];
+const nameOf = w => watch.kols.find(k => k.wallet === w)?.handle || watch.mine.find(k => k.wallet === w)?.label || short(w);
+function tokenCell(r) { if (!canSee(r)) return `<span class="redact">██████</span>`;
+  return r.preview ? `<span class="acc">${r.sym}</span> <span class="mut">${short(r.mint)}</span>` : `<a href="https://pump.fun/coin/${r.mint}" target="_blank" rel="noopener">${short(r.mint)}</a>`; }
+function tail(r) { if (r.preview) return `<span class="pv">preview</span>`;
+  return canSee(r) ? `<a href="https://solscan.io/tx/${r.sig}" target="_blank" rel="noopener">tx ↗</a>` : `<span class="redact">████</span>`; }
+const kindTag = r => `<span class="k-${r.kind}">${r.kind === "sell" ? "exit" : "buy"}</span>`;
+function rowEl(r) { const d = document.createElement("div");
+  d.innerHTML = `<span class="t">${r.t}</span>${kindTag(r)}<span>${esc(r.who)} · ${r.sol} SOL · ${tokenCell(r)}</span>${tail(r)}`; return d; }
+function miniEl(r) { const d = document.createElement("div");
+  d.innerHTML = `${kindTag(r)}${r.kind === "sell" ? "" : "&nbsp;"} ${esc(r.who)} · ${r.sol} SOL · ${canSee(r) ? `<span class="acc">${r.preview ? r.sym : short(r.mint)}</span>` : `<span class="redact">█████</span>`}`; return d; }
+function addRow(r) { rows.unshift(r); rows.length = Math.min(rows.length, 30);
+  const log = $("#log"); log.prepend(rowEl(r)); while (log.children.length > 14) log.lastChild.remove();
+  const m = $("#mini"); m.prepend(miniEl(r)); while (m.children.length > 4) m.lastChild.remove(); }
+function redraw() { $("#log").replaceChildren(...rows.slice(0, 14).map(rowEl)); $("#mini").replaceChildren(...rows.slice(0, 4).map(miniEl));
+  $$("#log div").forEach(d => d.style.animation = "none"); }
+
+const PK = Array.from({ length: 8 }, (_, i) => "kol " + String(i + 1).padStart(2, "0"));
+const SY = ["$GLIM", "$ORBT", "$MOTH", "$KITE", "$DUSK", "$FERN", "$PYLN", "$HUSK", "$VOLT", "$RIFT", "$LOOM", "$NIB"];
+const ago = s => new Date(Date.now() - s * 1000).toTimeString().slice(0, 8);
+const previewRow = (back = 0) => ({ t: back ? ago(back) : now(), kind: Math.random() < .74 ? "buy" : "sell", who: pick(PK), sol: rnd(.3, 9).toFixed(2), mint: fake(40, "pump"), sym: pick(SY), preview: true });
+let pTimer = null, live = false, ws = null;
+function startPreview() { if (pTimer || live) return; let back = 0; const seed = Array.from({ length: 12 }, () => previewRow(back += Math.round(rnd(4, 40)))); seed.reverse().forEach(addRow); $$("#log div").forEach(d => d.style.animation = "none");
+  pTimer = setInterval(() => addRow(previewRow()), reduce ? 5000 : 2200); }
+function setLamp() { const L = $("#lamp"), n = keys().length, on = ws && ws.readyState === 1 && n;
+  L.className = "lamp" + (on ? " live" : ""); L.textContent = on ? (`live · ${n} wallet${n === 1 ? "" : "s"}` + (live ? "" : " · waiting for the next trade")) : "preview"; }
+function openFeed() {
+  startPreview(); setLamp(); if (!keys().length || (ws && ws.readyState < 2)) return;
+  try { ws = new WebSocket("wss://pumpportal.fun/api/data"); } catch { return; }
+  ws.onopen = () => { ws.send(JSON.stringify({ method: "subscribeAccountTrade", keys: keys() })); setLamp(); };
+  ws.onmessage = m => { let d; try { d = JSON.parse(m.data); } catch { return; }
+    if (!d.signature || !keys().includes(d.traderPublicKey)) return;
+    if (!live) { live = true; clearInterval(pTimer); pTimer = null; rows.length = 0; $("#log").innerHTML = ""; $("#mini").innerHTML = ""; }
+    addRow({ t: now(), kind: d.txType === "sell" ? "sell" : "buy", who: nameOf(d.traderPublicKey), sol: (+d.solAmount || 0).toFixed(2), mint: d.mint, sig: d.signature }); setLamp(); };
+  ws.onclose = () => { setLamp(); setTimeout(openFeed, 5000); };
+}
+function drawWatch() { $("#wl").innerHTML = watch.mine.length ? `<span style="border:0;padding:0">you watch:</span>` + watch.mine.map((k, i) =>
+  `<span>${k.label ? esc(k.label) + " " : ""}<span class="mut">${short(k.wallet)}</span><button data-i="${i}" title="stop watching">×</button></span>`).join("") : "";
+  $$("#wl button").forEach(b => b.onclick = () => { const [k] = watch.mine.splice(+b.dataset.i, 1); store.set("watch", watch.mine);
+    if (ws && ws.readyState === 1 && !keys().includes(k.wallet)) ws.send(JSON.stringify({ method: "unsubscribeAccountTrade", keys: [k.wallet] })); drawWatch(); setLamp(); }); }
+$("#wAdd").onclick = () => { const w = $("#wAddr").value.trim(), label = $("#wLabel").value.trim().toLowerCase();
+  if (!isAddr(w)) { $("#wAddr").value = ""; $("#wAddr").placeholder = "that isn't a solana address"; return; }
+  if (!keys().includes(w)) { watch.mine.push({ wallet: w, label }); store.set("watch", watch.mine);
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ method: "subscribeAccountTrade", keys: [w] })); else openFeed(); }
+  $("#wAddr").value = $("#wLabel").value = ""; drawWatch(); setLamp(); };
+$("#wAddr").onkeydown = $("#wLabel").onkeydown = e => { if (e.key === "Enter") $("#wAdd").click(); };
+drawWatch(); openFeed();
+
+// ---------- the gap ----------
+let isExample = false, last = null;
+function gOut(lines) { $("#gOut").innerHTML = `<div class="mut">anon@entry ~ % entry gap</div>` + lines.map(l => `<div>${l}</div>`).join(""); }
+$("#example").onclick = () => { const call = Date.UTC(2026, 9, 28, 16, 20, 11), id = (BigInt(call) - EPOCH) << 22n | 4194303n;
+  $("#gTweet").value = "https://x.com/example/status/" + id; $("#gTx").value = ""; $("#manual").hidden = false;
+  $("#gTime").value = new Date(call - (14 * 60 + 28) * 1000).toISOString().slice(0, 19); isExample = true; $("#measure").click(); };
+["#gTweet", "#gTx", "#gTime"].forEach(s => $(s).addEventListener("input", () => isExample = false));
+$("#measure").onclick = async () => {
+  const tt = postTime($("#gTweet").value), sig = sigOf($("#gTx").value), manual = $("#gTime").value;
+  if (!tt) return gOut([`<span class="red">✗</span> that isn't a post link · x.com/…/status/…`]);
+  let bt, meta;
+  if (sig) { gOut([`<span class="mut">reading the tx from the chain …</span>`]);
+    try { const b = await buyTime(sig); bt = b.t; meta = `slot ${b.slot.toLocaleString("en-US")}${b.signer ? " · signer " + short(b.signer) : ""}`; }
+    catch (e) { $("#manual").hidden = false; return gOut([`<span class="red">✗</span> couldn't read that tx (${esc(e.message || "rpc busy")})`, `<span class="mut">paste the buy time below and measure again.</span>`]); } }
+  else if (manual) { bt = Date.parse(manual.length === 16 ? manual + ":00Z" : manual + "Z"); meta = "time entered by hand"; }
+  else { $("#manual").hidden = false; return gOut([`<span class="red">✗</span> paste their buy tx, or the buy time.`]); }
+  const d = tt - bt; last = { d, tt, bt, url: $("#gTweet").value.trim() };
+  gOut([`call  ${utc(tt)}`, `<span class="mut">      read from the post id</span>`, `buy   ${utc(bt)}`, `<span class="mut">      ${esc(meta)}</span>`,
+    `gap   <span class="${d >= 0 ? "acc" : ""}">${gapLabel(d)}</span>`, isExample ? `<span class="mut">example · not a real call</span>` : `<span class="ok acc">✓</span> measured`]);
+  $("#gRes").hidden = false; $("#gVal").textContent = gapLabel(d); $("#gVal").className = "gapv " + (d >= 0 ? "acc" : "");
+  $("#gVerdict").textContent = d >= 0 ? `in ${gapLabel(d).slice(1)} before the call. their entry.` : `bought ${gapLabel(d).slice(1)} after the call. same side as you.`;
+  drawCard(last);
+  const txt = d >= 0 ? `bought ${gapLabel(d).slice(1)} before the call.` : `bought ${gapLabel(d).slice(1)} after the call.`;
+  $("#post").href = "https://x.com/intent/post?text=" + encodeURIComponent(`${txt}\n\nmeasured with ${CONFIG.ticker}. their entry. not your exit.${isExample ? "" : "\n" + last.url}`);
+};
+async function drawCard(g) {
+  const c = $("#card"), x = c.getContext("2d"); c.width = 1200; c.height = 630;
+  try { await document.fonts.load('500 40px "JetBrains Mono"'); } catch {}
+  const F = (w, s) => `${w} ${s}px "JetBrains Mono", ui-monospace, monospace`;
+  x.fillStyle = T.bg; x.fillRect(0, 0, 1200, 630); x.fillStyle = "rgba(255,255,255,.05)";
+  for (let yy = 11; yy < 630; yy += 22) for (let xx = 11; xx < 1200; xx += 22) x.fillRect(xx, yy, 2, 2);
+  const o = TK.OBJECTS[CONFIG.object]({ ticker: CONFIG.ticker }); TK.draw(x, o, { theme: T, cell: 8, x: 84, y: 140, shadowLen: 900 });
+  const L = 500; x.textBaseline = "alphabetic";
+  x.font = F(400, 22); x.fillStyle = T.muted; x.fillText("anon@entry ~ % entry gap", L, 196);
+  x.font = F(500, 92); x.fillStyle = g.d >= 0 ? T.accent : T.ink; x.shadowColor = T.accent; x.shadowBlur = g.d >= 0 ? 26 : 0;
+  x.fillText(gapLabel(g.d), L - 4, 296); const w = x.measureText(gapLabel(g.d)).width; x.shadowBlur = 0;
+  x.fillStyle = T.accent; x.fillRect(L + w + 6, 226, 30, 74);
+  x.font = F(400, 27); x.fillStyle = T.ink; x.fillText(g.d >= 0 ? "bought before the call." : "bought after the call.", L, 352);
+  x.font = F(400, 19); x.fillStyle = T.muted; x.fillText("call  " + utc(g.tt), L, 410); x.fillText("buy   " + utc(g.bt), L, 440);
+  x.fillStyle = T.line; x.fillRect(L, 488, 640, 1.5);
+  x.font = F(500, 21); x.fillStyle = T.ink; x.fillText("their entry. not your exit.", L, 528);
+  x.fillStyle = T.accent; x.textAlign = "right"; x.fillText(CONFIG.ticker, L + 640, 528); x.textAlign = "left";
+  if (isExample) { x.font = F(400, 15); x.fillStyle = T.muted; x.fillText("example · not a real call", L, 568); }
+}
+$("#save").onclick = () => $("#card").toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "entry-gap.png"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); });
+
+// ---------- gap board ----------
+function renderBoard(list, preview) {
+  const max = Math.max(...list.map(r => r.med), 1);
+  $("#board").innerHTML = `<div class="hd"><span>kol</span><span>calls</span><span>median gap</span><span class="hide">longest</span><span class="hide">before the call →</span></div>` +
+    list.map(r => `<div class="r"><span>${esc(r.handle)}</span><span class="mut">${r.n}</span><span class="${r.med >= 0 ? "acc" : ""}">${gapLabel(r.med)}</span><span class="hide mut">${gapLabel(r.max)}</span>` +
+      `<span class="hide"><span class="bar" style="display:block;width:${Math.max(3, r.med / max * 100)}%"></span></span></div>`).join("");
+  const L = $("#bLamp"); L.className = "lamp" + (preview ? "" : " live"); L.textContent = preview ? "preview" : `from the chain · ${list.reduce((s, r) => s + r.n, 0)} calls`;
+}
+async function buildBoard() {
+  const calls = CONFIG.calls.filter(c => postTime(c.tweet) && sigOf(c.tx));
+  if (!calls.length) { const m = 60000;
+    return renderBoard([["kol 01", 14, 22 * m, 71 * m], ["kol 04", 9, 16 * m, 48 * m], ["kol 02", 21, 11 * m, 39 * m], ["kol 07", 6, 7 * m, 19 * m], ["kol 05", 12, 3 * m, 12 * m], ["kol 03", 8, -2 * m, 4 * m]]
+      .map(([handle, n, med, max]) => ({ handle, n, med, max })), true); }
+  const cache = store.get("gaps", {}), by = {};
+  for (const c of calls) { const sig = sigOf(c.tx); let bt = cache[sig];
+    if (!bt) { try { bt = (await buyTime(sig)).t; cache[sig] = bt; store.set("gaps", cache); } catch {} await sleep(300); }
+    if (bt) (by[c.handle] ||= []).push(postTime(c.tweet) - bt); }
+  const med = a => { const s = [...a].sort((p, q) => p - q), h = s.length >> 1; return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2; };
+  const list = Object.entries(by).map(([handle, a]) => ({ handle, n: a.length, med: med(a), max: Math.max(...a) })).sort((a, b) => b.med - a.med);
+  list.length ? renderBoard(list, false) : renderBoard([], true);
+}
+buildBoard();
+$("#example").click(); // show the tool working on first view (labelled as an example)
+
+// ---------- the desk (beta) ----------
+const desk = Object.assign({ follow: "fastest gap", tp: "3x", exit: "when they sell", size: .5, max: 6, armed: false }, store.get("desk", {}));
+$$("[data-g]").forEach(gr => { const key = gr.dataset.g;
+  gr.querySelectorAll(".chip").forEach(b => { b.classList.toggle("on", b.textContent === desk[key]);
+    b.onclick = () => { desk[key] = b.textContent; gr.querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === b)); deskChanged(); }; }); });
+$("#dSize").value = desk.size; $("#dMax").value = desk.max;
+$("#dSize").oninput = e => { desk.size = +e.target.value; deskChanged(); };
+$("#dMax").oninput = e => { desk.max = +e.target.value; deskChanged(); };
+$("#arm").onclick = () => { desk.armed = !desk.armed; deskChanged(); };
+function deskChanged() {
+  $("#dSizeO").textContent = desk.size.toFixed(2) + " SOL"; $("#dMaxO").textContent = desk.max + (desk.max === 1 ? " entry" : " entries");
+  $("#arm").textContent = desk.armed ? "disarm" : "arm the desk"; const L = $("#dLamp"); L.className = "lamp" + (desk.armed ? " live" : ""); L.textContent = desk.armed ? "armed · beta" : "beta";
+  store.set("desk", desk);
+  const slug = s => s.replace(/ /g, "-"), cmd = `entry desk ${desk.armed ? "--arm" : "--dry"} --follow ${slug(desk.follow)} --size ${desk.size.toFixed(2)} --tp ${desk.tp} --exit ${slug(desk.exit)} --max ${desk.max}`;
+  const sim = [["14:02:07", "in", "kol 03", "0"], ["14:31:50", "out", "kol 03", "+38%"], ["15:10:22", "in", "kol 05", "0"], ["15:12:01", "out", "kol 05", "−12%"], ["16:44:19", "in", "kol 01", "0"]];
+  $("#dOut").innerHTML = `<div><span class="mut">anon@entry ~ %</span> ${esc(cmd)}</div>` +
+    `<div><span class="acc">✓</span> follow ${esc(desk.follow)}</div><div><span class="acc">✓</span> ${desk.size.toFixed(2)} SOL an entry · max ${desk.max} a day</div>` +
+    `<div><span class="acc">✓</span> out ${desk.exit === "when they sell" ? "the second they sell" : "at take profit"}${desk.tp !== "none" ? " · tp " + desk.tp : ""}</div>` +
+    `<div>${desk.armed ? `<span class="acc">◉</span> armed. executes when beta opens · no funds move` : `<span class="mut">○ not armed</span>`}</div>` +
+    `<div class="mut" style="margin-top:10px"># what it would have done today <span class="pv">preview</span></div>` +
+    sim.map(([t, k, who, r]) => `<div><span class="mut">${t}</span>  ${k === "in" ? `<span class="acc">in </span>` : `<span class="${r.startsWith("+") ? "acc" : "red"}">out</span>`} ${who} · ${k === "in" ? desk.size.toFixed(2) + " SOL at their price" : (desk.exit === "when they sell" ? "they sold · " : "tp · ") + r}</div>`).join("");
+}
+deskChanged();
+
+// ---------- pinned steps ----------
+function steps() { const s = $("#how"), r = s.getBoundingClientRect(), span = r.height - innerHeight;
+  const p = span > 0 ? Math.min(1, Math.max(0, -r.top / span)) : 1, n = Math.min(5, Math.floor(p * 5.999));
+  $$("#steplist li").forEach((li, i) => li.classList.toggle("on", i < n));
+  $$("#stepterm .ln").forEach((li, i) => li.classList.toggle("on", i < n)); $("#stepn").textContent = n; }
+addEventListener("scroll", steps, { passive: true }); steps();
+
+// ---------- top bar + active nav ----------
+const secs = $$("section.s");
+addEventListener("scroll", () => { $("#top").classList.toggle("solid", scrollY > 10);
+  const cur = secs.filter(s => s.getBoundingClientRect().top < innerHeight * .4).pop();
+  $$(".nav a").forEach(a => a.classList.toggle("on", cur && a.getAttribute("href") === "#" + cur.id)); }, { passive: true });
+</script>
+</body></html>

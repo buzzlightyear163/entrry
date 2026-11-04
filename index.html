@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="en" data-theme="graphite">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ENTRY — their entry. not your exit.</title>
+<meta name="description" content="ENTRY watches KOL wallets and sees the buy the second it lands, before the tweet. Then it logs how long they waited to call it.">
+<meta name="theme-color" content="#131210">
+<meta property="og:title" content="ENTRY — their entry. not your exit."><meta property="og:description" content="KOL wallets, watched live. See the buy before the tweet.">
+<meta property="og:type" content="website"><meta property="og:image" content="/og.png">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="/og.png">
+<link rel="icon" href="/fav.png"><link rel="apple-touch-icon" href="/fav.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== termkit site system ===== */
+:root{
+  --bg:#f0e7d8; --paper:#f8f3ea; --ink:#2b2a26; --muted:#8b8474; --faint:#b3a993; --line:#3a372f; --hair:#d9d0be;
+  --shadow:#d6ccb8; --accent:#2f9e4f; --red:#c9452e; --glow:none;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace; --pixel:"Silkscreen",var(--mono);
+  --w:1060px; --r:2px;
+}
+[data-theme=phosphor]{ --bg:#050806; --paper:#0b120d; --ink:#d6ffe2; --muted:#5d8a6b; --faint:#3a5a44; --line:#24543a; --hair:#14261b;
+  --shadow:#020302; --accent:#4cf28d; --red:#ff3b30; --glow:0 0 .4em color-mix(in srgb,var(--accent) 70%,transparent); }
+[data-theme=graphite]{ --bg:#131210; --paper:#1a1916; --ink:#efe7d8; --muted:#6f6a60; --faint:#4a463f; --line:#3a362f; --hair:#26241f;
+  --shadow:#0a0908; --accent:#efe7d8; --red:#e0533d; }
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.6 var(--mono);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.4;
+  background-image:radial-gradient(color-mix(in srgb,var(--ink) 9%,transparent) .7px,transparent 1px);background-size:4px 4px}
+[hidden]{display:none!important}
+a{color:inherit} ::selection{background:var(--accent);color:var(--bg)}
+.wrap{position:relative;z-index:1;max-width:var(--w);margin:0 auto;padding:0 24px}
+.mut{color:var(--muted)} .acc{color:var(--accent);text-shadow:var(--glow)} .red{color:var(--red)}
+#bgtape{position:fixed;left:0;right:0;bottom:6vh;width:100%;height:140px;pointer-events:none;z-index:0;opacity:.55}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid transparent;transition:border-color .2s}
+.top.solid{border-bottom-color:var(--hair)}
+.top .wrap{display:flex;align-items:center;gap:28px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;text-decoration:none;font-size:15px}
+.brand canvas{width:26px;height:26px;image-rendering:pixelated}
+.nav{display:flex;gap:20px;margin:0 auto;font-size:12.5px}
+.nav a{color:var(--muted);text-decoration:none;padding:6px 0;border-bottom:2px solid transparent}
+.nav a:hover{color:var(--ink)} .nav a.on{color:var(--ink);border-bottom-color:var(--accent)}
+
+/* buttons, chips, tags */
+.btn{display:inline-flex;align-items:center;gap:.5em;font:500 13px var(--mono);color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r);
+  padding:.62em 1.1em;box-shadow:3px 3px 0 var(--shadow);cursor:pointer;text-decoration:none;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--shadow)} .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--shadow)}
+.btn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+[data-theme=phosphor] .btn.pri{background:var(--accent);border-color:var(--accent);box-shadow:3px 3px 0 var(--shadow),var(--glow)}
+.chip{display:inline-block;font-size:12px;padding:.18em .6em;color:var(--muted);border:1px solid transparent;cursor:pointer;background:none;font-family:var(--mono)}
+.chip.on{background:var(--accent);color:var(--bg)} .chip:not(.on):hover{border-color:var(--hair);color:var(--ink)}
+.tag{display:inline-block;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);border:1px solid var(--hair);padding:.15em .55em}
+.lamp{display:inline-flex;align-items:center;gap:.5em;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lamp::before{content:"";width:7px;height:7px;background:var(--faint)} .lamp.live::before{background:var(--accent);box-shadow:var(--glow);animation:blink 1.6s steps(1) infinite}
+.cur{display:inline-block;width:.55em;height:1.05em;background:var(--accent);vertical-align:-.17em;margin-left:.1em;box-shadow:var(--glow);animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* hero */
+.hero{position:relative;overflow:hidden;padding:92px 0 70px}
+.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}
+.prompt{font-size:15px;color:var(--muted);min-height:1.6em}
+.prompt .cmd{color:var(--ink)}
+.hero h1{font-size:clamp(38px,5.4vw,62px);line-height:1.04;font-weight:400;letter-spacing:-.035em;margin:22px 0 20px}
+.hero h1 b{font-weight:700}
+.hero .lede{color:var(--muted);max-width:44ch;font-size:15.5px}
+.ctas{display:flex;gap:14px;flex-wrap:wrap;margin-top:30px}
+.ca{display:flex;align-items:center;gap:12px;margin-top:22px;font-size:12px;color:var(--muted)}
+.ca code{color:var(--ink);background:var(--paper);border:1px dashed var(--hair);padding:.3em .6em;font-family:var(--mono);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hero-vis{position:relative;height:440px}
+.hero-vis canvas.obj{position:absolute;inset:0;width:100%;height:100%}
+.hero-vis .term{position:absolute;right:0;bottom:12px;width:min(330px,80%)}
+
+/* ticker strip */
+.strip{position:relative;z-index:1;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);overflow:hidden;font-size:12.5px;white-space:nowrap;background:color-mix(in srgb,var(--paper) 50%,transparent)}
+.strip .run{display:inline-flex;gap:40px;padding:11px 0;animation:run 60s linear infinite}
+@keyframes run{to{transform:translateX(-50%)}}
+
+/* sections */
+section.s{position:relative;z-index:1;padding:110px 0 30px}
+.eyebrow{display:flex;align-items:center;gap:10px;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.eyebrow b{color:var(--accent);font-weight:500} .eyebrow i{flex:0 0 60px;height:1px;background:var(--hair)}
+h2{font-size:clamp(30px,4vw,46px);font-weight:500;letter-spacing:-.03em;line-height:1.1;margin:18px 0 14px}
+h2 .pr{color:var(--faint);font-weight:400;margin-right:.35em}
+.lede{color:var(--muted);max-width:52ch}
+.rule{height:1px;background:var(--hair);margin:90px 0 0}
+
+/* card + terminal */
+.card{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r);box-shadow:6px 6px 0 var(--shadow);padding:18px;transition:transform .15s,box-shadow .15s}
+a.card,.card.lift{text-decoration:none;color:inherit;display:block}
+a.card:hover,.card.lift:hover{transform:translate(-2px,-3px);box-shadow:8px 9px 0 var(--shadow)}
+.term{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r);box-shadow:6px 6px 0 var(--shadow);font-size:13px}
+.term .bar{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1.5px solid var(--line);font-size:11px;color:var(--muted)}
+.term .bar i{width:9px;height:9px;border:1.5px solid var(--line);border-radius:50%}
+.term .bar span{margin-left:auto}
+.term .body{padding:14px 16px;line-height:1.9;min-height:3em}
+.term .ln{opacity:.18;transition:opacity .25s} .term .ln.on{opacity:1}
+.term .ln .ok{color:var(--accent);text-shadow:var(--glow)}
+.grid{display:grid;gap:22px}
+.g2{grid-template-columns:1fr 1fr} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+
+/* pinned step sequence */
+.pin{height:300vh} .pin .stick{position:sticky;top:90px}
+.steps{display:grid;grid-template-columns:1fr 1.15fr;gap:40px;margin-top:40px;align-items:start}
+.steplist li{list-style:none;display:flex;gap:14px;padding:14px 0;border-bottom:1px dashed var(--hair);color:var(--faint);transition:color .2s}
+.steplist li b{color:inherit;font-weight:500;width:2em} .steplist li.on{color:var(--ink)} .steplist li.on b{color:var(--accent)}
+.meter{font-size:12px;color:var(--muted);margin-top:14px}
+
+/* fee split */
+.split{display:flex;height:34px;border:1.5px solid var(--line);margin:30px 0 18px}
+.split div{border-right:1.5px solid var(--line);background:repeating-linear-gradient(90deg,var(--c) 0 6px,transparent 6px 8px)}
+.split div:last-child{border-right:0}
+.rows div{display:flex;gap:16px;padding:7px 0;border-bottom:1px dashed var(--hair)} .rows b{width:3em}
+
+/* stat */
+.stat .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-size:30px;font-weight:500;letter-spacing:-.02em;margin-top:6px}
+
+/* cells (supply / holders grid) */
+.cells{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.cells i{aspect-ratio:1;border:1px dashed var(--hair)} .cells i.f{background:var(--faint);border-color:var(--faint)} .cells i.you{background:var(--accent);border-color:var(--accent)}
+
+/* log */
+.log{height:320px;overflow:hidden;font-size:12.5px;line-height:2;-webkit-mask:linear-gradient(#000 70%,transparent)}
+.log div{display:grid;grid-template-columns:76px 74px 1fr auto;gap:12px;animation:in .35s ease}
+.log .t{color:var(--faint)} .log a{color:var(--muted);text-decoration:none} .log a:hover{color:var(--accent)}
+@keyframes in{from{opacity:0;transform:translateY(-6px)}}
+
+/* man-page faq */
+.man details{border-bottom:1px dashed var(--hair)}
+.man summary{list-style:none;cursor:pointer;padding:18px 0;display:flex;gap:14px;font-weight:500}
+.man summary::-webkit-details-marker{display:none}
+.man summary::before{content:"+";color:var(--accent);width:1em} .man details[open] summary::before{content:"−"}
+.man details p{color:var(--muted);padding:0 0 20px 2.1em;max-width:62ch}
+
+/* footer */
+footer{position:relative;z-index:1;padding:120px 0 60px}
+footer .big{font-size:clamp(34px,6vw,76px);letter-spacing:-.04em;line-height:1}
+footer .fine{display:flex;gap:24px;flex-wrap:wrap;margin-top:50px;font-size:12px;color:var(--muted);border-top:1px solid var(--hair);padding-top:20px}
+
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .6s,transform .6s} .reveal.in{opacity:1;transform:none}
+@media (max-width:860px){
+  .nav{display:none} .hero{padding-top:56px} .hero .wrap,.steps,.g2,.g3{grid-template-columns:1fr} .g4{grid-template-columns:1fr 1fr}
+  .hero-vis{height:330px} .pin{height:auto} .pin .stick{position:static} .steplist li{color:var(--ink)} .term .ln{opacity:1}
+  .log div{grid-template-columns:60px 64px 1fr} .log div a{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important} .reveal{opacity:1;transform:none} .term .ln{opacity:1}}
+</style>
+<style>
+/* ENTRY: project components on top of the termkit system */
+.k-buy{color:var(--accent);text-shadow:var(--glow)} .k-sell{color:var(--red)}
+.redact{color:var(--faint);letter-spacing:-.12em;user-select:none}
+.pv{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);border:1px solid var(--hair);padding:0 .45em;align-self:center;line-height:1.6}
+.lock{display:inline-block;padding:.12em .6em;font-size:11px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);color:var(--muted)}
+.lock.open{background:var(--accent);color:var(--bg);border-color:var(--accent);box-shadow:var(--glow)}
+.gate{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:34px}
+.gate .msg{font-size:12px;color:var(--muted);flex:1;min-width:220px}
+input.tk{width:100%;background:var(--bg);color:var(--ink);border:1.5px solid var(--line);border-radius:var(--r);font:13px var(--mono);padding:.7em .8em;outline:none;color-scheme:dark}
+input.tk:focus{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+input.tk::placeholder{color:var(--faint)}
+.fld{display:block;margin-bottom:14px} .fld span{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.watch{display:flex;gap:10px;margin-top:18px} .watch input:first-child{flex:2} .watch input:nth-child(2){flex:1}
+.wl{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;font-size:12px;color:var(--muted)}
+.wl span{border:1px solid var(--hair);padding:.1em .5em} .wl button{background:none;border:0;color:var(--faint);cursor:pointer;font:inherit;margin-left:.45em} .wl button:hover{color:var(--red)}
+.gapv{font-size:clamp(44px,6.4vw,72px);font-weight:500;letter-spacing:-.045em;line-height:1;margin:14px 0 6px}
+.verdict{font-size:14px;color:var(--muted)}
+canvas#card{width:100%;aspect-ratio:1200/630;display:block;border:1.5px solid var(--line);box-shadow:6px 6px 0 var(--shadow)}
+.board{font-size:13px;margin-top:8px}
+.board .hd,.board .r{display:grid;grid-template-columns:1.1fr .6fr .9fr .9fr 1.5fr;gap:14px;padding:11px 0;border-bottom:1px dashed var(--hair);align-items:center}
+.board .hd{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.board .bar{height:10px;background:repeating-linear-gradient(90deg,var(--accent) 0 6px,transparent 6px 8px);box-shadow:none}
+.vs .hd,.vs .r{display:grid;grid-template-columns:1fr 64px 64px;gap:12px;padding:9px 0;border-bottom:1px dashed var(--hair);font-size:13px}
+.vs .hd{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.ctl{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--hair);font-size:13px}
+.ctl .l{color:var(--muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.ctl .rg{display:flex;align-items:center;gap:12px} .ctl output{min-width:5.5em;text-align:right}
+input[type=range]{accent-color:var(--accent);width:100%}
+.out{min-height:9.5em}
+.out div{white-space:pre-wrap}
+@media (max-width:860px){
+  .board .hd,.board .r{grid-template-columns:1fr .5fr 1fr} .board .hide{display:none}
+  .ctl{grid-template-columns:1fr;gap:6px} .watch{flex-direction:column}
+  .log div>:nth-child(4){display:none} .log{font-size:11.5px} .log div{grid-template-columns:52px 34px 1fr;gap:8px}
+  .prompt{font-size:13px}
+  .hero-vis{height:auto;padding-top:300px} .hero-vis .term{position:relative;right:auto;bottom:auto;width:100%}
+}
+.top .wrap>.btn{margin-left:auto}
+</style>
+</head>
+<body>
+<canvas id="bgtape"></canvas>
+
+<header class="top" id="top"><div class="wrap">
+  <a class="brand" href="#hero"><canvas id="logo"></canvas>entry</a>
+  <nav class="nav"><a href="#how">how</a><a href="#live">live</a><a href="#gap">gap</a><a href="#desk">desk</a><a href="#fees">fees</a><a href="#token">token</a><a href="#faq">faq</a></nav>
+  <a class="btn" id="buyTop" href="#token">buy</a>
+</div></header>
+
+<section class="hero" id="hero">
+  <canvas class="hero-bg" id="heroBg" style="position:absolute;inset:0;width:100%;height:100%;z-index:0"></canvas>
+  <div class="wrap">
+    <div>
+      <div class="prompt"><span>anon@entry ~ %</span> <span class="cmd" id="typed"></span><span class="cur"></span></div>
+      <h1>their entry.<br><b>not your exit.</b></h1>
+      <p class="lede">ENTRY watches the public wallets of KOLs and sees the buy the second it lands, before the tweet. Then it logs how long they waited to tell you.</p>
+      <div class="ctas"><a class="btn pri" href="#live">open the feed →</a><a class="btn" href="#gap">check a call</a></div>
+      <div class="ca"><span>ca</span><code id="ca">posted here and on X at launch</code><button class="chip" id="copy" hidden>copy</button></div>
+    </div>
+    <div class="hero-vis" id="heroVis">
+      <div class="term"><div class="bar"><i></i><i></i><i></i><span>kols.log</span></div>
+        <div class="body" id="mini"></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="strip"><div class="run" id="strip"></div></div>
+
+<section class="s pin" id="how"><div class="stick"><div class="wrap">
+  <div class="eyebrow"><b>01</b> · how it works <i></i></div>
+  <h2><span class="pr">%</span>entry watch --kols</h2>
+  <p class="lede">A KOL buys. The chain knows before the timeline does. Five things happen, in order.</p>
+  <div class="steps">
+    <ol class="steplist" id="steplist">
+      <li><b>01</b>a kol buys from a public wallet</li><li><b>02</b>entry sees it as it lands</li><li><b>03</b>the desk enters at their price</li><li><b>04</b>the call goes out on X, later</li><li><b>05</b>the gap goes on their record</li>
+    </ol>
+    <div class="term"><div class="bar"><i></i><i></i><i></i><span>entry — zsh</span></div>
+      <div class="body" id="stepterm">
+        <div class="ln"><span class="mut">anon@entry ~ %</span> entry watch --kols</div>
+        <div class="ln"><span class="ok">✓</span> kol 03 bought 4.20 SOL · 14:02:07</div>
+        <div class="ln"><span class="ok">✓</span> seen on the curve · tx on solscan</div>
+        <div class="ln"><span class="ok">✓</span> desk in at 0.50 SOL · their price <span class="mut">(beta)</span></div>
+        <div class="ln"><span class="ok">✓</span> call posted 14:16:39 · gap <span class="acc">+14m 32s</span></div>
+      </div></div>
+  </div>
+  <div class="meter">step <span id="stepn">0</span> / 5</div>
+</div></div></section>
+
+<section class="s" id="live"><div class="wrap">
+  <div class="eyebrow"><b>02</b> · live feed <i></i></div>
+  <h2><span class="pr">%</span>tail -f kols.log</h2>
+  <p class="lede">Buys and exits from known KOL wallets, live off pump.fun. Everyone sees that they moved. Holders see what. <span class="lamp" id="lamp">preview</span></p>
+  <div class="card gate">
+    <span class="lock" id="lock">locked</span>
+    <span class="msg" id="gateMsg">hold <span id="gmin"></span> $ENTRY to open the token and the tx on every row.</span>
+    <button class="btn" id="peek">peek holder view</button>
+    <button class="btn pri" id="connect">connect wallet</button>
+  </div>
+  <div class="card" style="margin-top:22px"><div class="log" id="log"></div></div>
+  <div class="watch">
+    <input class="tk" id="wAddr" placeholder="add a wallet to watch · solana address" autocomplete="off" spellcheck="false">
+    <input class="tk" id="wLabel" placeholder="label (optional)" autocomplete="off" maxlength="18">
+    <button class="btn" id="wAdd">watch</button>
+  </div>
+  <div class="wl" id="wl"></div>
+</div></section>
+
+<section class="s" id="gap"><div class="wrap">
+  <div class="eyebrow"><b>03</b> · the gap <i></i></div>
+  <h2><span class="pr">%</span>entry gap &lt;call&gt; &lt;tx&gt;</h2>
+  <p class="lede">Paste the call and the KOL's buy. ENTRY reads the time straight out of the post id and the block time off the chain, then tells you how early they were.</p>
+  <div class="grid g2" style="margin-top:34px;align-items:start">
+    <div class="card">
+      <label class="fld"><span>the call · x post link</span><input class="tk" id="gTweet" placeholder="https://x.com/…/status/1850…" autocomplete="off" spellcheck="false"></label>
+      <label class="fld"><span>their buy · tx signature or solscan link</span><input class="tk" id="gTx" placeholder="5Kq3…  or  solscan.io/tx/…" autocomplete="off" spellcheck="false"></label>
+      <label class="fld" id="manual" hidden><span>or the buy time · utc</span><input class="tk" id="gTime" type="datetime-local" step="1"></label>
+      <div class="ctas" style="margin-top:6px"><button class="btn pri" id="measure">measure the gap</button><button class="btn" id="example">load an example</button></div>
+    </div>
+    <div class="term"><div class="bar"><i></i><i></i><i></i><span>entry gap</span></div>
+      <div class="body out" id="gOut"><div class="mut">anon@entry ~ % entry gap</div><div class="mut">waiting for a call and a tx.</div></div></div>
+  </div>
+  <div id="gRes" class="grid g2" style="margin-top:44px;align-items:center" hidden>
+    <div>
+      <div class="eyebrow">the gap <i></i></div>
+      <div class="gapv acc" id="gVal"></div>
+      <div class="verdict" id="gVerdict"></div>
+      <div class="ctas"><button class="btn pri" id="save">save card</button><a class="btn" id="post" target="_blank" rel="noopener">post on X</a></div>
+    </div>
+    <canvas id="card"></canvas>
+  </div>
+
+  <div style="margin-top:80px">
+    <div class="eyebrow"><b>03b</b> · gap board <i></i></div>
+    <h2 style="font-size:clamp(24px,3vw,32px)"><span class="pr">%</span>entry board --by gap</h2>
+    <p class="lede">How long each KOL usually holds before the call. Every line is a logged call: a post and a buy you can open. <span class="lamp" id="bLamp">preview</span></p>
+    <div class="board card" style="margin-top:24px" id="board"></div>
+  </div>
+</div></section>
+
+<section class="s" id="desk"><div class="wrap">
+  <div class="eyebrow"><b>04</b> · the desk <i></i></div>
+  <h2><span class="pr">%</span>entry desk --arm</h2>
+  <p class="lede">The desk enters with them at their price, and gets out the second they start selling. It's in beta: you can arm it now, nothing executes and no funds move until beta opens.</p>
+  <div class="grid g2" style="margin-top:34px;align-items:start">
+    <div class="card" id="deskCtl">
+      <div class="ctl"><span class="l">follow</span><div data-g="follow"><button class="chip">all kols</button><button class="chip on">fastest gap</button><button class="chip">top 10</button><button class="chip">my list</button></div></div>
+      <div class="ctl"><span class="l">size</span><div class="rg"><input type="range" id="dSize" min="0.1" max="2" step="0.05" value="0.5"><output id="dSizeO">0.50 SOL</output></div></div>
+      <div class="ctl"><span class="l">take profit</span><div data-g="tp"><button class="chip">2x</button><button class="chip on">3x</button><button class="chip">5x</button><button class="chip">none</button></div></div>
+      <div class="ctl"><span class="l">exit</span><div data-g="exit"><button class="chip on">when they sell</button><button class="chip">at take profit</button></div></div>
+      <div class="ctl" style="border-bottom:0"><span class="l">max a day</span><div class="rg"><input type="range" id="dMax" min="1" max="20" step="1" value="6"><output id="dMaxO">6 entries</output></div></div>
+      <div class="ctas" style="margin-top:14px"><button class="btn pri" id="arm">arm the desk</button><span class="lamp" id="dLamp" style="align-self:center">beta</span></div>
+    </div>
+    <div class="term"><div class="bar"><i></i><i></i><i></i><span>desk.log</span></div>
+      <div class="body out" id="dOut"></div></div>
+  </div>
+</div></section>
+
+<section class="s" id="fees"><div class="wrap">
+  <div class="eyebrow"><b>05</b> · where the profit goes <i></i></div>
+  <h2><span class="pr">%</span>entry fees --split</h2>
+  <p class="lede">Creator fees fund the desk. When the desk closes an entry in profit, every $1.00 splits the same way, and most of it buys $ENTRY back.</p>
+  <div class="split"><div style="flex:60;--c:var(--red)"></div><div style="flex:30;--c:var(--accent)"></div><div style="flex:10;--c:var(--faint)"></div></div>
+  <div class="rows"><div><b class="red">$0.60</b>buyback + burn $ENTRY</div><div><b class="acc">$0.30</b>back into the desk</div><div><b>$0.10</b>rpc + infra: keeping the feed fast</div></div>
+  <div class="grid g3" style="margin-top:40px">
+    <div class="card lift stat"><div class="k">api keys needed</div><div class="v">0</div></div>
+    <div class="card lift stat"><div class="k">post time</div><div class="v">from the id</div></div>
+    <div class="card lift stat"><div class="k">every row</div><div class="v acc">on-chain</div></div>
+  </div>
+</div></section>
+
+<section class="s" id="token"><div class="wrap">
+  <div class="eyebrow"><b>06</b> · token <i></i></div>
+  <h2><span class="pr">%</span>entry token</h2>
+  <div class="grid g2" style="margin-top:34px;align-items:start">
+    <div class="card"><div class="rows">
+      <div><span class="mut" style="width:9em">ticker</span>$ENTRY</div><div><span class="mut" style="width:9em">chain</span>solana · pump.fun</div>
+      <div><span class="mut" style="width:9em">supply</span>1,000,000,000</div><div><span class="mut" style="width:9em">feed key</span><span id="gmin2"></span> $ENTRY</div></div>
+      <div class="ctas"><a class="btn pri" id="buy" href="#">buy on pump.fun</a><a class="btn" id="xlink" href="#">follow on X</a></div></div>
+    <div class="card vs"><div class="mut" style="font-size:12px;margin-bottom:8px"># what holding opens</div>
+      <div class="hd"><span></span><span>public</span><span>holders</span></div>
+      <div class="r"><span>that a kol bought or sold</span><span class="acc">✓</span><span class="acc">✓</span></div>
+      <div class="r"><span>which token, and the tx</span><span class="redact">███</span><span class="acc">✓</span></div>
+      <div class="r"><span>gap check + gap board</span><span class="acc">✓</span><span class="acc">✓</span></div>
+      <div class="r"><span>the desk, when beta opens</span><span class="mut">—</span><span class="acc">✓</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="s" id="faq"><div class="wrap">
+  <div class="eyebrow"><b>07</b> · faq <i></i></div>
+  <h2><span class="pr">%</span>man entry</h2>
+  <div class="man" style="margin-top:28px">
+    <details open><summary>is this financial advice?</summary><p>No. ENTRY shows what public wallets did on-chain. It never tells you to buy, and a KOL buying is not a reason to.</p></details>
+    <details><summary>whose wallets are these?</summary><p>Only wallets a KOL has shown publicly, or that are publicly tied to them. Every row links to the transaction so anyone can check it. If a wallet is wrong, it comes off the list.</p></details>
+    <details><summary>does the desk trade for me today?</summary><p>No. The feed and the gap check are live. The desk is in beta: you can arm it, but nothing executes and no funds move until beta opens.</p></details>
+    <details><summary>why holders only?</summary><p>The feed is the product and $ENTRY is the key. Everyone can see that a KOL moved. Holders see what they moved into.</p></details>
+    <details><summary>what can't it see?</summary><p>It reads trades on the pump.fun curve from wallets on the list. A KOL buying from a fresh wallet, on another venue or through a bundle won't show. And getting in at their price doesn't stop them from selling first.</p></details>
+    <details><summary>will entry DM me?</summary><p>Never. Anyone who does is not us.</p></details>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="big">their entry.<br>not your <b>exit.</b><span class="cur"></span></div>
+  <div class="ctas"><a class="btn pri" href="#live">open the feed</a><a class="btn" href="#gap">check a call</a></div>
+  <div class="fine"><span>$ENTRY · solana</span><span>not financial advice</span><span id="cafoot"></span></div>
+</div></footer>
+
+<script>
+/* termkit.js: pixel objects, long shadow, LED text. Shared by graphics.html and the site. */
+const TK = (() => {
+  const THEMES = {
+    paper: { bg:"#f0e7d8", shadow:"#dcd2bf", ink:"#2b2a26", muted:"#8b8474", accent:"#2f9e4f", red:"#c9452e", card:"#f8f3ea", line:"#3a372f",
+      outline:"#2e2a23", body:"#ece2c9", hi:"#faf5e8", shade:"#cdbf9f", dark:"#a39372", screen:"#16211a", glare:"#24372b", glow:"#45e07f", led:"#45e07f", slot:"#4a4337", glowBlur:0 },
+    phosphor: { bg:"#050806", shadow:"#020302", ink:"#d6ffe2", muted:"#5d8a6b", accent:"#4cf28d", red:"#ff3b30", card:"#0b120d", line:"#1f3b29",
+      outline:"#0d0f0c", body:"#e6dcc0", hi:"#f6f0de", shade:"#c4b693", dark:"#9a8a68", screen:"#0b1a10", glare:"#173323", glow:"#5cff9a", led:"#5cff9a", slot:"#3b352a", glowBlur:.9 },
+    graphite: { bg:"#131210", shadow:"#0a0908", ink:"#efe7d8", muted:"#6f6a60", accent:"#efe7d8", red:"#e0533d", card:"#1a1916", line:"#33302a",
+      outline:"#0a0908", body:"#ece4d3", hi:"#faf6ec", shade:"#c9bfa9", dark:"#9d927b", screen:"#1b1a17", glare:"#2b2925", glow:"#efe7d8", led:"#7fe0a0", slot:"#3d3a33", glowBlur:.5 },
+  };
+
+  // 3x5 pixel font (M, N, W wider). Rows top to bottom.
+  const FONT = {
+    A:["010","101","111","101","101"],B:["110","101","110","101","110"],C:["011","100","100","100","011"],D:["110","101","101","101","110"],
+    E:["111","100","110","100","111"],F:["111","100","110","100","100"],G:["011","100","101","101","011"],H:["101","101","111","101","101"],
+    I:["111","010","010","010","111"],J:["001","001","001","101","010"],K:["101","101","110","101","101"],L:["100","100","100","100","111"],
+    M:["10001","11011","10101","10001","10001"],N:["1001","1101","1011","1001","1001"],O:["010","101","101","101","010"],P:["110","101","110","100","100"],
+    Q:["010","101","101","110","011"],R:["110","101","110","101","101"],S:["011","100","010","001","110"],T:["111","010","010","010","010"],
+    U:["101","101","101","101","111"],V:["101","101","101","101","010"],W:["10001","10001","10101","11011","10001"],X:["101","101","010","101","101"],
+    Y:["101","101","010","010","010"],Z:["111","001","010","100","111"],
+    0:["111","101","101","101","111"],1:["010","110","010","010","111"],2:["110","001","010","100","111"],3:["110","001","010","001","110"],
+    4:["101","101","111","001","001"],5:["111","100","110","001","110"],6:["011","100","111","101","111"],7:["111","001","010","010","010"],
+    8:["111","101","111","101","111"],9:["111","101","111","001","110"]," ":["0","0","0","0","0"],"-":["000","000","111","000","000"],
+    ".":["0","0","0","0","1"],"+":["000","010","111","010","000"],"%":["101","001","010","100","101"],">":["100","010","001","010","100"],"_":["000","000","000","000","111"],
+  };
+  const glyph = ch => FONT[ch.toUpperCase()] || FONT[" "];
+  const textWidth = (s, k = 1) => [...s].reduce((w, ch, i) => w + glyph(ch)[0].length * k + (i ? k : 0), 0);
+
+  function Grid(w, h) {
+    const c = new Array(w * h).fill(null);
+    return {
+      w, h, c,
+      get(x, y) { return x < 0 || y < 0 || x >= w || y >= h ? null : c[y * w + x]; },
+      set(x, y, v) { if (x >= 0 && y >= 0 && x < w && y < h) c[y * w + x] = v; },
+      rect(x, y, rw, rh, v) { for (let j = 0; j < rh; j++) for (let i = 0; i < rw; i++) this.set(x + i, y + j, v); },
+      text(s, x, y, v, k = 1) {
+        let cx = x;
+        for (const ch of s) { const g = glyph(ch);
+          g.forEach((row, j) => [...row].forEach((b, i) => { if (b === "1") this.rect(cx + i * k, y + j * k, k, k, v); }));
+          cx += g[0].length * k + k; }
+      },
+      outline(v = "outline") { // 1-cell outline around everything that is filled
+        const add = [];
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++)
+          if (!this.get(x, y) && (this.get(x - 1, y) || this.get(x + 1, y) || this.get(x, y - 1) || this.get(x, y + 1))) add.push([x, y]);
+        add.forEach(([x, y]) => this.set(x, y, v));
+      },
+    };
+  }
+
+  // ---------- Objects. Each returns a Grid of palette keys. Build inside a 1-cell margin, then outline. ----------
+  const OBJECTS = {
+    computer({ ticker = "" } = {}) {
+      const t = ticker.replace(/^\$/, "").toUpperCase();
+      const k = t.length <= 4 ? 2 : 1;
+      const tw = textWidth(t, k);
+      const sw = Math.max(24, tw + 8);                    // screen width grows with the ticker
+      const sh = Math.max(16, Math.round(sw * .52));      // and keeps a CRT-ish ratio
+      const mw = sw + 10, mh = sh + 13;                   // monitor housing
+      const W = mw + 6, H = mh + 18, g = Grid(W, H);
+      const mx = 3, my = 1, sx = mx + 4, sy = my + 3;
+      // monitor housing
+      g.rect(mx, my, mw, mh, "body"); g.set(mx, my, null); g.set(mx + mw - 1, my, null);
+      g.rect(mx + 1, my + 1, mw - 2, 1, "hi"); g.rect(mx + 1, my + 1, 1, mh - 3, "hi");
+      g.rect(mx + mw - 2, my + 1, 1, mh - 2, "shade"); g.rect(mx + 1, my + mh - 2, mw - 2, 1, "shade");
+      // bezel + screen
+      g.rect(sx - 1, sy - 1, sw + 2, sh + 2, "shade"); g.rect(sx - 1, sy - 1, sw + 2, 1, "dark"); g.rect(sx - 1, sy - 1, 1, sh + 2, "dark");
+      g.rect(sx, sy, sw, sh, "screen");
+      [[sx, sy], [sx + sw - 1, sy], [sx, sy + sh - 1], [sx + sw - 1, sy + sh - 1]].forEach(([x, y]) => g.set(x, y, "shade"));
+      // screen content: ticker, then a prompt (big ticker) or a little bar chart (long ticker)
+      const th = 5 * k, ty = sy + Math.max(2, Math.floor((sh - th - 5) / 2));
+      g.text(t, sx + Math.floor((sw - tw) / 2), ty, "glow", k);
+      const by = sy + sh - 3;
+      if (k === 2) { g.set(sx + 3, by - 1, "glow"); g.set(sx + 4, by, "glow"); g.set(sx + 3, by + 1, "glow"); g.rect(sx + 6, by + 1, 3, 1, "glow"); }
+      else { [1, 2, 1, 3, 2, 3, 2, 4, 3, 4].forEach((b, i) => g.rect(sx + Math.floor((sw - 19) / 2) + i * 2, by + 2 - b, 1, b, i === 4 ? "red" : "glow")); }
+      // front panel
+      const py = my + mh - 5;
+      g.rect(mx + 4, py, 2, 1, "led"); g.set(mx + 7, py, "red");
+      const fw = Math.min(12, mw - 16); g.rect(mx + mw - 4 - fw, py, fw, 1, "slot"); g.rect(mx + mw - 4 - fw, py + 1, fw, 1, "hi");
+      // neck (3 rows so the outlines of monitor and keyboard stay separate)
+      const ny = my + mh, nx = mx + Math.floor(mw / 2) - 6;
+      g.rect(nx, ny, 12, 3, "shade"); g.rect(nx, ny, 12, 1, "dark");
+      // keyboard slab
+      const kx = 1, kw = W - 2, ky = ny + 3, kh = 10;
+      g.rect(kx, ky, kw, kh, "body"); g.set(kx, ky, null); g.set(kx + kw - 1, ky, null);
+      g.rect(kx + 1, ky + 1, kw - 2, 1, "hi"); g.rect(kx + 1, ky + kh - 1, kw - 2, 1, "shade");
+      const k0 = kx + 3 + ((kw - 6) % 2 ? 1 : 0), k1 = kx + kw - 3;
+      for (let x = k0; x < k1; x += 2) { g.set(x, ky + 3, "dark"); g.set(x, ky + 5, "dark"); }
+      const mid = kx + Math.floor(kw / 2);
+      for (let x = k0; x < k1; x += 2) if (x < mid - 9 || x > mid + 8) g.set(x, ky + 7, "dark");
+      g.rect(mid - 8, ky + 7, 16, 1, "dark");
+      g.outline();
+      return g;
+    },
+    // Example of a custom object: a framed token with a halo. Copy this pattern for new narratives.
+    frame({ ticker = "" } = {}) {
+      const g = Grid(30, 38), t = ticker.replace(/^\$/, "").toUpperCase().slice(0, 1);
+      g.rect(2, 8, 26, 28, "body"); g.rect(3, 9, 24, 1, "hi"); g.rect(3, 9, 1, 26, "hi"); g.rect(26, 9, 1, 26, "shade"); g.rect(3, 34, 24, 1, "shade");
+      g.rect(6, 12, 18, 20, "screen");
+      g.rect(10, 16, 10, 12, "shade"); g.rect(9, 17, 12, 10, "shade"); g.rect(11, 17, 8, 10, "body"); g.rect(10, 18, 10, 8, "body");
+      g.text(t, 14, 20, "dark");
+      g.outline();
+      // details drawn after the outline stay thin: a halo ring floating above
+      g.rect(11, 1, 8, 1, "hi"); g.rect(8, 2, 3, 1, "hi"); g.rect(19, 2, 3, 1, "hi"); g.set(7, 3, "hi"); g.set(22, 3, "shade");
+      g.rect(8, 4, 3, 1, "shade"); g.rect(19, 4, 3, 1, "shade"); g.rect(11, 5, 8, 1, "shade");
+      return g;
+    },
+    // ENTRY A: the OCT computer, screen shows a flat chart, the pump, and the entry marked at the bottom.
+    chartpc() {
+      const sw = 30, sh = 20, mw = sw + 10, mh = sh + 13, W = mw + 6, H = mh + 18, g = Grid(W, H);
+      const mx = 3, my = 1, sx = mx + 4, sy = my + 3;
+      g.rect(mx, my, mw, mh, "body"); g.set(mx, my, null); g.set(mx + mw - 1, my, null);
+      g.rect(mx + 1, my + 1, mw - 2, 1, "hi"); g.rect(mx + 1, my + 1, 1, mh - 3, "hi");
+      g.rect(mx + mw - 2, my + 1, 1, mh - 2, "shade"); g.rect(mx + 1, my + mh - 2, mw - 2, 1, "shade");
+      g.rect(sx - 1, sy - 1, sw + 2, sh + 2, "shade"); g.rect(sx - 1, sy - 1, sw + 2, 1, "dark"); g.rect(sx - 1, sy - 1, 1, sh + 2, "dark");
+      g.rect(sx, sy, sw, sh, "screen");
+      [[sx, sy], [sx + sw - 1, sy], [sx, sy + sh - 1], [sx + sw - 1, sy + sh - 1]].forEach(([x, y]) => g.set(x, y, "shade"));
+      g.text("ENTRY", sx + 2, sy + 2, "glow");
+      // price: flat and quiet, then the pump
+      const base = sy + sh - 6, top = sy + 6, flat = [0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0, 0, 0];
+      let px = sx + 2, prev = null; const pts = [];
+      flat.forEach(o => pts.push([px++, base + o]));
+      const ex = px - 1, n = sx + sw - 3 - px;
+      for (let i = 1; i <= n; i++) pts.push([px + i - 1, Math.round(base - (base - top) * Math.pow(i / n, 1.7))]);
+      pts.forEach(([x, y]) => { if (prev) for (let yy = Math.min(prev, y); yy <= Math.max(prev, y); yy++) g.set(x, yy, "glow"); g.set(x, y, "glow"); prev = y; });
+      // their entry: a marker under the bottom of the move
+      g.set(ex, base + 2, "led"); g.rect(ex - 1, base + 3, 3, 1, "led"); g.rect(ex - 2, base + 4, 5, 1, "led");
+      // where the timeline buys: red at the top
+      const [tx, ty] = pts[pts.length - 1]; g.rect(tx - 1, ty - 1, 2, 2, "red");
+      const py = my + mh - 5;
+      g.rect(mx + 4, py, 2, 1, "led"); g.set(mx + 7, py, "red");
+      const fw = Math.min(12, mw - 16); g.rect(mx + mw - 4 - fw, py, fw, 1, "slot"); g.rect(mx + mw - 4 - fw, py + 1, fw, 1, "hi");
+      const ny = my + mh, nx = mx + Math.floor(mw / 2) - 6;
+      g.rect(nx, ny, 12, 3, "shade"); g.rect(nx, ny, 12, 1, "dark");
+      const kx = 1, kw = W - 2, ky = ny + 3, kh = 10;
+      g.rect(kx, ky, kw, kh, "body"); g.set(kx, ky, null); g.set(kx + kw - 1, ky, null);
+      g.rect(kx + 1, ky + 1, kw - 2, 1, "hi"); g.rect(kx + 1, ky + kh - 1, kw - 2, 1, "shade");
+      const k0 = kx + 3 + ((kw - 6) % 2 ? 1 : 0), k1 = kx + kw - 3;
+      for (let x = k0; x < k1; x += 2) { g.set(x, ky + 3, "dark"); g.set(x, ky + 5, "dark"); }
+      const mid = kx + Math.floor(kw / 2);
+      for (let x = k0; x < k1; x += 2) if (x < mid - 9 || x > mid + 8) g.set(x, ky + 7, "dark");
+      g.rect(mid - 8, ky + 7, 16, 1, "dark");
+      g.outline();
+      return g;
+    },
+    // ENTRY B: a door left ajar, light coming through, ENTRY over the frame.
+    door() {
+      const W = 34, H = 46, g = Grid(W, H);
+      const fx = 2, fy = 1, fw = 30, fh = 42;                       // frame
+      g.rect(fx, fy, fw, fh, "body"); g.rect(fx + 1, fy + 1, fw - 2, 1, "hi"); g.rect(fx + 1, fy + 1, 1, fh - 1, "hi");
+      g.rect(fx + fw - 2, fy + 1, 1, fh - 1, "shade");
+      // lintel plate with the name
+      const lx = fx + 4, ly = fy + 3, lw = fw - 8, lh = 9;
+      g.rect(lx - 1, ly - 1, lw + 2, lh + 2, "dark"); g.rect(lx, ly, lw, lh, "screen");
+      g.text("ENTRY", lx + Math.floor((lw - textWidth("ENTRY")) / 2), ly + 2, "glow");
+      // doorway: light inside
+      const ox = fx + 4, oy = ly + lh + 3, ow = fw - 8, oh = fy + fh - oy;
+      g.rect(ox - 1, oy - 1, ow + 2, oh + 1, "dark"); g.rect(ox, oy, ow, oh, "glow");
+      // the door, swung in: a narrow slab on the hinge side, its edge catching light
+      const dw = 13; g.rect(ox, oy, dw, oh, "shade"); g.rect(ox, oy, dw, 1, "dark");
+      g.rect(ox + 2, oy + 3, dw - 5, 11, "dark"); g.rect(ox + 3, oy + 4, dw - 7, 9, "shade");
+      g.rect(ox + 2, oy + 17, dw - 5, oh - 21, "dark"); g.rect(ox + 3, oy + 18, dw - 7, oh - 23, "shade");
+      g.rect(ox + dw - 1, oy, 1, oh, "hi"); g.rect(ox + dw - 3, oy + 15, 2, 2, "slot");
+      // floor step, with the light spilling out over it
+      g.rect(0, fy + fh, W, 2, "shade"); g.rect(0, fy + fh, W, 1, "hi");
+      g.rect(ox + dw, fy + fh, ow - dw + 1, 1, "glow"); g.rect(ox + dw + 1, fy + fh + 1, ow - dw + 3, 1, "glow");
+      g.outline();
+      return g;
+    },
+    // ENTRY C: a stopwatch. The gap between their buy and the call.
+    watch() {
+      const W = 38, H = 44, g = Grid(W, H), cx = 19, cy = 25, r = 16.4;
+      // crown + side button
+      g.rect(15, 1, 8, 3, "body"); g.rect(15, 1, 8, 1, "hi"); g.rect(17, 4, 4, 5, "shade");
+      g.rect(30, 9, 3, 3, "body"); g.set(32, 11, "shade"); g.rect(29, 11, 2, 2, "shade");
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const dx = x + .5 - cx, dy = y + .5 - cy, d = Math.hypot(dx, dy);
+        if (d <= r) g.set(x, y, d > r - 2.2 ? (dx + dy < -4 ? "hi" : dx + dy > 4 ? "shade" : "body") : d > r - 3.4 ? "dark" : "screen");
+      }
+      // ticks: 12 around the face, long at the quarters
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2, long = i % 3 === 0;
+        for (let k = 0; k < (long ? 2 : 1); k++) { const rr = r - 4.6 - k; g.set(Math.floor(cx + Math.sin(a) * rr), Math.floor(cy - Math.cos(a) * rr), i === 0 ? "red" : "shade"); } }
+      // readout: +14M
+      const t = "+14M", tw = textWidth(t); g.text(t, Math.round(cx - tw / 2), cy - 7, "glow");
+      // hand from the centre to the buy, well before 12
+      const hx = 18, hy = cy + 3; g.rect(hx, hy, 2, 2, "glow");
+      for (let k = 1; k <= 4; k++) g.rect(hx - 2 * k, hy - k + 1, 2, 1, "glow");
+      g.outline();
+      return g;
+    },
+    // ENTRY: a lit emergency-exit style sign that says ENTRY. Hangs from two thin rods.
+    sign() {
+      const W = 46, H = 28, g = Grid(W, H);
+      const hx = 1, hy = 5, hw = 44, hh = 22;              // housing
+      g.rect(hx, hy, hw, hh, "body"); g.set(hx, hy, null); g.set(hx + hw - 1, hy, null);
+      g.rect(hx + 1, hy + 1, hw - 2, 1, "hi"); g.rect(hx + 1, hy + 1, 1, hh - 3, "hi");
+      g.rect(hx + hw - 2, hy + 1, 1, hh - 2, "shade"); g.rect(hx + 1, hy + hh - 2, hw - 2, 1, "shade");
+      // face
+      const fx = hx + 3, fy = hy + 3, fw = hw - 6, fh = 13;
+      g.rect(fx - 1, fy - 1, fw + 2, fh + 2, "dark"); g.rect(fx, fy, fw, fh, "screen");
+      // pictogram: a lit doorway with a figure walking in (dark silhouette), then ENTRY with an arrow pointing in
+      const dw = 7, dh = 11, gap = 5, tw = textWidth("ENTRY"), m = Math.floor((fw - dw - gap - tw) / 2);
+      const dx = fx + m, dy = fy + 1, tx = dx + dw + gap;
+      g.rect(dx, dy, dw, dh, "glow");
+      const man = ["00110", "00110", "00000", "01110", "10111", "00110", "01110", "01001", "10001"];
+      man.forEach((row, j) => [...row].forEach((b, i) => { if (b === "1") g.set(dx + 1 + i, dy + 2 + j, "screen"); }));
+      g.text("ENTRY", tx, dy, "glow");
+      const ay = dy + 8, ae = tx + tw - 1; g.rect(tx, ay, tw, 1, "glow");
+      g.rect(ae - 2, ay - 2, 1, 5, "glow"); g.rect(ae - 1, ay - 1, 1, 3, "glow");
+      // underside: test button + battery led
+      const by = hy + hh - 4; g.rect(hx + 5, by, 4, 1, "slot"); g.set(hx + hw - 7, by, "red");
+      g.outline();
+      // rods drawn after the outline stay thin
+      for (let y = 0; y < hy; y++) { g.set(hx + 7, y, "outline"); g.set(hx + hw - 8, y, "outline"); }
+      g.rect(hx + 5, 0, 5, 1, "outline"); g.rect(hx + hw - 10, 0, 5, 1, "outline");
+      return g;
+    },
+  };
+
+  // ---------- Rendering ----------
+  function draw(ctx, grid, o) {
+    const th = typeof o.theme === "string" ? THEMES[o.theme] : o.theme;
+    const cell = o.cell, ox = Math.round(o.x), oy = Math.round(o.y);
+    if (o.shadow !== false) {
+      const len = o.shadowLen ?? 2000, dir = o.shadowDir ?? [1, 1];
+      const sil = document.createElement("canvas"); sil.width = grid.w * cell; sil.height = grid.h * cell;
+      const s = sil.getContext("2d"); s.fillStyle = o.shadowColor || th.shadow;
+      for (let y = 0; y < grid.h; y++) for (let x = 0; x < grid.w; x++) if (grid.get(x, y)) s.fillRect(x * cell, y * cell, cell, cell);
+      for (let i = 1; i <= len; i++) ctx.drawImage(sil, ox + dir[0] * i, oy + dir[1] * i);
+    }
+    for (let y = 0; y < grid.h; y++) for (let x = 0; x < grid.w; x++) {
+      const v = grid.get(x, y); if (!v) continue;
+      ctx.fillStyle = th[v] || v;
+      const glowing = (v === "glow" || v === "led") && th.glowBlur;
+      if (glowing) { ctx.shadowColor = th[v]; ctx.shadowBlur = cell * 2.2 * th.glowBlur; } else ctx.shadowBlur = 0;
+      ctx.fillRect(ox + x * cell, oy + y * cell, cell, cell);
+    }
+    ctx.shadowBlur = 0;
+    return { w: grid.w * cell, h: grid.h * cell };
+  }
+
+  // Big LED-matrix text (WIM-style). Square dots with a gap, optional glow.
+  function led(ctx, s, o) {
+    const k = o.cell, gap = o.gap ?? Math.max(1, Math.round(k * .18));
+    let cx = o.x;
+    ctx.fillStyle = o.color; ctx.shadowColor = o.color; ctx.shadowBlur = o.glow ? k * 1.4 : 0;
+    for (const ch of s.toUpperCase()) { const g = glyph(ch);
+      g.forEach((row, j) => [...row].forEach((b, i) => {
+        const sub = o.sub ?? 2; // each font pixel is drawn as sub×sub dots
+        if (b === "1") for (let a = 0; a < sub; a++) for (let c = 0; c < sub; c++)
+          ctx.fillRect(cx + (i * sub + c) * k, o.y + (j * sub + a) * k, k - gap, k - gap);
+        else if (o.dim) { ctx.save(); ctx.globalAlpha = .07; ctx.shadowBlur = 0;
+          for (let a = 0; a < sub; a++) for (let c = 0; c < sub; c++) ctx.fillRect(cx + (i * sub + c) * k, o.y + (j * sub + a) * k, k - gap, k - gap); ctx.restore(); }
+      }));
+      cx += (g[0].length + 1) * (o.sub ?? 2) * k; }
+    ctx.shadowBlur = 0;
+    return cx - o.x;
+  }
+
+  // Fit a canvas to an element at device pixel ratio and return a ctx in CSS pixels.
+  function canvasFor(el) {
+    const c = document.createElement("canvas"), r = el.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    c.width = Math.round(r.width * d); c.height = Math.round(r.height * d);
+    c.style.cssText = "position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated";
+    el.prepend(c); const ctx = c.getContext("2d"); ctx.scale(d, d); ctx.imageSmoothingEnabled = false; return ctx;
+  }
+
+  return { THEMES, FONT, OBJECTS, Grid, draw, led, canvasFor, textWidth };
+})();
+if (typeof module !== "undefined") module.exports = TK;
+</script>
+<script>
+const CONFIG = {
+  ca: "", x: "https://x.com/", dexscreener: "", site: "", ticker: "$ENTRY", object: "watch", theme: document.documentElement.dataset.theme,
+  holderMin: 500000,                                   // $ENTRY a wallet needs to open the feed
+  rpc: ["https://solana-rpc.publicnode.com", "https://api.mainnet-beta.solana.com"], // free, no keys. Put your own first if you get one.
+  // Only wallets the KOL has shown publicly, or that are publicly tied to them.
+  kols: [
+    // { handle: "@handle", wallet: "SolanaWalletAddress" },
+  ],
+  // Logged calls for the gap board: the call post + the KOL's buy tx. Times come from the post id and the chain.
+  calls: [
+    // { handle: "@handle", tweet: "https://x.com/handle/status/1850000000000000000", tx: "5Kq…signature" },
+  ],
+};
+const T = TK.THEMES[CONFIG.theme];
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const short = a => a ? a.slice(0, 4) + "…" + a.slice(-4) : "";
+const fmt = n => Math.round(n).toLocaleString("en-US");
+const now = () => new Date().toTimeString().slice(0, 8);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const store = { get(k, d) { try { return JSON.parse(localStorage.getItem("entry." + k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("entry." + k, JSON.stringify(v)); } catch {} } };
+const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+const isAddr = s => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
+const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
+const fake = (n, end = "") => Array.from({ length: n }, () => pick(B58)).join("") + end;
+
+// ---------- CA + links ----------
+if (CONFIG.ca) { $("#ca").textContent = CONFIG.ca; $("#copy").hidden = false; $("#cafoot").textContent = "ca " + CONFIG.ca;
+  $("#copy").onclick = () => navigator.clipboard.writeText(CONFIG.ca).then(() => $("#copy").textContent = "copied");
+  ["#buy", "#buyTop"].forEach(s => $(s).href = "https://pump.fun/coin/" + CONFIG.ca); }
+$("#xlink").href = CONFIG.x;
+["#gmin", "#gmin2"].forEach(s => $(s).textContent = fmt(CONFIG.holderMin));
+
+// ---------- logo + hero object + background line ----------
+{ const g = TK.OBJECTS[CONFIG.object]({ ticker: CONFIG.ticker }), c = $("#logo"), k = 2;
+  c.width = g.w * k; c.height = g.h * k; const x = c.getContext("2d"); TK.draw(x, g, { theme: T, cell: k, x: 0, y: 0, shadow: false });
+  c.style.width = Math.round(26 * g.w / g.h) + "px"; }
+function drawHero() {
+  const hero = $("#hero"), c = $("#heroBg"), d = devicePixelRatio || 1, r = hero.getBoundingClientRect(), a = $("#heroVis").getBoundingClientRect();
+  c.width = r.width * d; c.height = r.height * d; const x = c.getContext("2d"); x.scale(d, d); x.imageSmoothingEnabled = false;
+  const g = TK.OBJECTS[CONFIG.object]({ ticker: CONFIG.ticker });
+  const mob = matchMedia("(max-width:860px)").matches, ah = mob ? a.height - $("#heroVis .term").offsetHeight - 24 : a.height;
+  const cell = Math.max(3, Math.floor(Math.min(a.width * .7 / g.w, ah * (mob ? .9 : .7) / g.h)));
+  const ox = a.left - r.left + (a.width - g.w * cell) * (mob ? .5 : .12), oy = a.top - r.top + (ah - g.h * cell) * (mob ? .5 : .1);
+  TK.draw(x, g, { theme: T, cell, x: ox, y: oy, shadowLen: 1600 });
+}
+drawHero(); addEventListener("resize", drawHero); document.fonts.ready.then(drawHero);
+function drawBg() { const c = $("#bgtape"), d = devicePixelRatio || 1; c.width = innerWidth * d; c.height = 140 * d;
+  const x = c.getContext("2d"); x.scale(d, d); x.fillStyle = T.muted; let y = 70, s = 7;
+  for (let i = 0; i < innerWidth; i += 4) { s = s * 16807 % 2147483647; y += (s / 2147483647 - .5) * 6 + (70 - y) * .02; x.globalAlpha = .45; x.fillRect(i, y, 2, 2); } }
+drawBg(); addEventListener("resize", drawBg);
+
+// ---------- typed prompt + strip ----------
+{ const cmd = "entry watch --kols --live", el = $("#typed"); if (reduce) el.textContent = cmd;
+  else { let i = 0; const t = setInterval(() => { el.textContent = cmd.slice(0, ++i); if (i >= cmd.length) clearInterval(t); }, 70); } }
+{ const facts = ["their entry. not your exit.", "buy lands → entry sees it → call goes out → gap logged", "every row links to solscan", "0 api keys", "holders see the token", "the desk gets out when they sell", "post time read from the post id", "profit buys back $ENTRY"];
+  $("#strip").innerHTML = [0, 1].map(() => facts.map(f => `<span><span class="acc">›</span> ${esc(f)}</span>`).join("")).join(""); }
+
+// ---------- chain ----------
+async function rpc(method, params) { let last;
+  for (const url of CONFIG.rpc) { try {
+    const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
+    const j = await r.json(); if (j.error) throw new Error(j.error.message || "rpc error"); return j.result;
+  } catch (e) { last = e; } } throw last || new Error("no rpc"); }
+const EPOCH = 1288834974657n;
+function postTime(s) { const m = String(s).trim().match(/status(?:es)?\/(\d{15,20})/) || String(s).trim().match(/^(\d{15,20})$/); return m ? Number((BigInt(m[1]) >> 22n) + EPOCH) : null; }
+function sigOf(s) { s = String(s).trim(); const m = s.match(/tx\/([1-9A-HJ-NP-Za-km-z]{64,90})/); if (m) return m[1]; return /^[1-9A-HJ-NP-Za-km-z]{64,90}$/.test(s) ? s : null; }
+async function buyTime(sig) { const tx = await rpc("getTransaction", [sig, { maxSupportedTransactionVersion: 0, encoding: "json", commitment: "confirmed" }]);
+  if (!tx || !tx.blockTime) throw new Error("tx not found"); return { t: tx.blockTime * 1000, slot: tx.slot, signer: tx.transaction?.message?.accountKeys?.[0] }; }
+const utc = t => new Date(t).toISOString().slice(0, 19).replace("T", " ") + " utc";
+function gapLabel(d) { const a = Math.abs(d) / 1000, sg = d >= 0 ? "+" : "−", p = n => String(Math.floor(n)).padStart(2, "0");
+  if (a >= 86400) return `${sg}${Math.floor(a / 86400)}d ${p(a % 86400 / 3600)}h`;
+  if (a >= 3600) return `${sg}${Math.floor(a / 3600)}h ${p(a % 3600 / 60)}m ${p(a % 60)}s`;
+  if (a >= 60) return `${sg}${Math.floor(a / 60)}m ${p(a % 60)}s`; return `${sg}${Math.floor(a)}s`; }
+
+// ---------- holder gate ----------
+const gate = { open: false, peek: false };
+const canSee = r => gate.open || (r.preview && gate.peek);
+function gateMsg(t) { $("#gateMsg").textContent = t; }
+function setGate() { const L = $("#lock"); L.className = "lock" + (gate.open || gate.peek ? " open" : "");
+  L.textContent = gate.open ? "open" : gate.peek ? "peek" : "locked"; $("#peek").textContent = gate.peek ? "back to public view" : "peek holder view"; redraw(); }
+$("#peek").onclick = () => { gate.peek = !gate.peek; if (gate.peek && !gate.open) gateMsg("peek shows the holder view on preview rows only."); setGate(); };
+$("#connect").onclick = async () => {
+  const p = window.phantom?.solana || window.solflare || window.backpack || window.solana;
+  if (!p) return gateMsg("no solana wallet found in this browser.");
+  if (!CONFIG.ca) return gateMsg("the gate opens at launch. preview until then.");
+  try { const r = await p.connect(); const pk = (r?.publicKey || p.publicKey).toString(); gateMsg("checking " + short(pk) + " …");
+    const res = await rpc("getTokenAccountsByOwner", [pk, { mint: CONFIG.ca }, { encoding: "jsonParsed" }]);
+    const bal = (res?.value || []).reduce((s, a) => s + (+a.account.data.parsed.info.tokenAmount.uiAmount || 0), 0);
+    gate.open = bal >= CONFIG.holderMin;
+    gateMsg(gate.open ? `${short(pk)} holds ${fmt(bal)} $ENTRY. the feed is open.` : `${short(pk)} holds ${fmt(bal)} $ENTRY. ${fmt(CONFIG.holderMin)} opens the feed.`);
+    $("#connect").textContent = short(pk); setGate();
+  } catch (e) { gateMsg("couldn't check that wallet. " + (e?.message || "try again.")); }
+};
+
+// ---------- live feed ----------
+const rows = [];
+const watch = { kols: CONFIG.kols.filter(k => isAddr(k.wallet || "")), mine: store.get("watch", []).filter(k => isAddr(k.wallet)) };
+const keys = () => [...new Set([...watch.kols.map(k => k.wallet), ...watch.mine.map(k => k.wallet)])];
+const nameOf = w => watch.kols.find(k => k.wallet === w)?.handle || watch.mine.find(k => k.wallet === w)?.label || short(w);
+function tokenCell(r) { if (!canSee(r)) return `<span class="redact">██████</span>`;
+  return r.preview ? `<span class="acc">${r.sym}</span> <span class="mut">${short(r.mint)}</span>` : `<a href="https://pump.fun/coin/${r.mint}" target="_blank" rel="noopener">${short(r.mint)}</a>`; }
+function tail(r) { if (r.preview) return `<span class="pv">preview</span>`;
+  return canSee(r) ? `<a href="https://solscan.io/tx/${r.sig}" target="_blank" rel="noopener">tx ↗</a>` : `<span class="redact">████</span>`; }
+const kindTag = r => `<span class="k-${r.kind}">${r.kind === "sell" ? "exit" : "buy"}</span>`;
+function rowEl(r) { const d = document.createElement("div");
+  d.innerHTML = `<span class="t">${r.t}</span>${kindTag(r)}<span>${esc(r.who)} · ${r.sol} SOL · ${tokenCell(r)}</span>${tail(r)}`; return d; }
+function miniEl(r) { const d = document.createElement("div");
+  d.innerHTML = `${kindTag(r)}${r.kind === "sell" ? "" : "&nbsp;"} ${esc(r.who)} · ${r.sol} SOL · ${canSee(r) ? `<span class="acc">${r.preview ? r.sym : short(r.mint)}</span>` : `<span class="redact">█████</span>`}`; return d; }
+function addRow(r) { rows.unshift(r); rows.length = Math.min(rows.length, 30);
+  const log = $("#log"); log.prepend(rowEl(r)); while (log.children.length > 14) log.lastChild.remove();
+  const m = $("#mini"); m.prepend(miniEl(r)); while (m.children.length > 4) m.lastChild.remove(); }
+function redraw() { $("#log").replaceChildren(...rows.slice(0, 14).map(rowEl)); $("#mini").replaceChildren(...rows.slice(0, 4).map(miniEl));
+  $$("#log div").forEach(d => d.style.animation = "none"); }
+
+const PK = Array.from({ length: 8 }, (_, i) => "kol " + String(i + 1).padStart(2, "0"));
+const SY = ["$GLIM", "$ORBT", "$MOTH", "$KITE", "$DUSK", "$FERN", "$PYLN", "$HUSK", "$VOLT", "$RIFT", "$LOOM", "$NIB"];
+const ago = s => new Date(Date.now() - s * 1000).toTimeString().slice(0, 8);
+const previewRow = (back = 0) => ({ t: back ? ago(back) : now(), kind: Math.random() < .74 ? "buy" : "sell", who: pick(PK), sol: rnd(.3, 9).toFixed(2), mint: fake(40, "pump"), sym: pick(SY), preview: true });
+let pTimer = null, live = false, ws = null;
+function startPreview() { if (pTimer || live) return; let back = 0; const seed = Array.from({ length: 12 }, () => previewRow(back += Math.round(rnd(4, 40)))); seed.reverse().forEach(addRow); $$("#log div").forEach(d => d.style.animation = "none");
+  pTimer = setInterval(() => addRow(previewRow()), reduce ? 5000 : 2200); }
+function setLamp() { const L = $("#lamp"), n = keys().length, on = ws && ws.readyState === 1 && n;
+  L.className = "lamp" + (on ? " live" : ""); L.textContent = on ? (`live · ${n} wallet${n === 1 ? "" : "s"}` + (live ? "" : " · waiting for the next trade")) : "preview"; }
+function openFeed() {
+  startPreview(); setLamp(); if (!keys().length || (ws && ws.readyState < 2)) return;
+  try { ws = new WebSocket("wss://pumpportal.fun/api/data"); } catch { return; }
+  ws.onopen = () => { ws.send(JSON.stringify({ method: "subscribeAccountTrade", keys: keys() })); setLamp(); };
+  ws.onmessage = m => { let d; try { d = JSON.parse(m.data); } catch { return; }
+    if (!d.signature || !keys().includes(d.traderPublicKey)) return;
+    if (!live) { live = true; clearInterval(pTimer); pTimer = null; rows.length = 0; $("#log").innerHTML = ""; $("#mini").innerHTML = ""; }
+    addRow({ t: now(), kind: d.txType === "sell" ? "sell" : "buy", who: nameOf(d.traderPublicKey), sol: (+d.solAmount || 0).toFixed(2), mint: d.mint, sig: d.signature }); setLamp(); };
+  ws.onclose = () => { setLamp(); setTimeout(openFeed, 5000); };
+}
+function drawWatch() { $("#wl").innerHTML = watch.mine.length ? `<span style="border:0;padding:0">you watch:</span>` + watch.mine.map((k, i) =>
+  `<span>${k.label ? esc(k.label) + " " : ""}<span class="mut">${short(k.wallet)}</span><button data-i="${i}" title="stop watching">×</button></span>`).join("") : "";
+  $$("#wl button").forEach(b => b.onclick = () => { const [k] = watch.mine.splice(+b.dataset.i, 1); store.set("watch", watch.mine);
+    if (ws && ws.readyState === 1 && !keys().includes(k.wallet)) ws.send(JSON.stringify({ method: "unsubscribeAccountTrade", keys: [k.wallet] })); drawWatch(); setLamp(); }); }
+$("#wAdd").onclick = () => { const w = $("#wAddr").value.trim(), label = $("#wLabel").value.trim().toLowerCase();
+  if (!isAddr(w)) { $("#wAddr").value = ""; $("#wAddr").placeholder = "that isn't a solana address"; return; }
+  if (!keys().includes(w)) { watch.mine.push({ wallet: w, label }); store.set("watch", watch.mine);
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ method: "subscribeAccountTrade", keys: [w] })); else openFeed(); }
+  $("#wAddr").value = $("#wLabel").value = ""; drawWatch(); setLamp(); };
+$("#wAddr").onkeydown = $("#wLabel").onkeydown = e => { if (e.key === "Enter") $("#wAdd").click(); };
+drawWatch(); openFeed();
+
+// ---------- the gap ----------
+let isExample = false, last = null;
+function gOut(lines) { $("#gOut").innerHTML = `<div class="mut">anon@entry ~ % entry gap</div>` + lines.map(l => `<div>${l}</div>`).join(""); }
+$("#example").onclick = () => { const call = Date.UTC(2026, 9, 28, 16, 20, 11), id = (BigInt(call) - EPOCH) << 22n | 4194303n;
+  $("#gTweet").value = "https://x.com/example/status/" + id; $("#gTx").value = ""; $("#manual").hidden = false;
+  $("#gTime").value = new Date(call - (14 * 60 + 28) * 1000).toISOString().slice(0, 19); isExample = true; $("#measure").click(); };
+["#gTweet", "#gTx", "#gTime"].forEach(s => $(s).addEventListener("input", () => isExample = false));
+$("#measure").onclick = async () => {
+  const tt = postTime($("#gTweet").value), sig = sigOf($("#gTx").value), manual = $("#gTime").value;
+  if (!tt) return gOut([`<span class="red">✗</span> that isn't a post link · x.com/…/status/…`]);
+  let bt, meta;
+  if (sig) { gOut([`<span class="mut">reading the tx from the chain …</span>`]);
+    try { const b = await buyTime(sig); bt = b.t; meta = `slot ${b.slot.toLocaleString("en-US")}${b.signer ? " · signer " + short(b.signer) : ""}`; }
+    catch (e) { $("#manual").hidden = false; return gOut([`<span class="red">✗</span> couldn't read that tx (${esc(e.message || "rpc busy")})`, `<span class="mut">paste the buy time below and measure again.</span>`]); } }
+  else if (manual) { bt = Date.parse(manual.length === 16 ? manual + ":00Z" : manual + "Z"); meta = "time entered by hand"; }
+  else { $("#manual").hidden = false; return gOut([`<span class="red">✗</span> paste their buy tx, or the buy time.`]); }
+  const d = tt - bt; last = { d, tt, bt, url: $("#gTweet").value.trim() };
+  gOut([`call  ${utc(tt)}`, `<span class="mut">      read from the post id</span>`, `buy   ${utc(bt)}`, `<span class="mut">      ${esc(meta)}</span>`,
+    `gap   <span class="${d >= 0 ? "acc" : ""}">${gapLabel(d)}</span>`, isExample ? `<span class="mut">example · not a real call</span>` : `<span class="ok acc">✓</span> measured`]);
+  $("#gRes").hidden = false; $("#gVal").textContent = gapLabel(d); $("#gVal").className = "gapv " + (d >= 0 ? "acc" : "");
+  $("#gVerdict").textContent = d >= 0 ? `in ${gapLabel(d).slice(1)} before the call. their entry.` : `bought ${gapLabel(d).slice(1)} after the call. same side as you.`;
+  drawCard(last);
+  const txt = d >= 0 ? `bought ${gapLabel(d).slice(1)} before the call.` : `bought ${gapLabel(d).slice(1)} after the call.`;
+  $("#post").href = "https://x.com/intent/post?text=" + encodeURIComponent(`${txt}\n\nmeasured with ${CONFIG.ticker}. their entry. not your exit.${isExample ? "" : "\n" + last.url}`);
+};
+async function drawCard(g) {
+  const c = $("#card"), x = c.getContext("2d"); c.width = 1200; c.height = 630;
+  try { await document.fonts.load('500 40px "JetBrains Mono"'); } catch {}
+  const F = (w, s) => `${w} ${s}px "JetBrains Mono", ui-monospace, monospace`;
+  x.fillStyle = T.bg; x.fillRect(0, 0, 1200, 630); x.fillStyle = "rgba(255,255,255,.05)";
+  for (let yy = 11; yy < 630; yy += 22) for (let xx = 11; xx < 1200; xx += 22) x.fillRect(xx, yy, 2, 2);
+  const o = TK.OBJECTS[CONFIG.object]({ ticker: CONFIG.ticker }); TK.draw(x, o, { theme: T, cell: 8, x: 84, y: 140, shadowLen: 900 });
+  const L = 500; x.textBaseline = "alphabetic";
+  x.font = F(400, 22); x.fillStyle = T.muted; x.fillText("anon@entry ~ % entry gap", L, 196);
+  x.font = F(500, 92); x.fillStyle = g.d >= 0 ? T.accent : T.ink; x.shadowColor = T.accent; x.shadowBlur = g.d >= 0 ? 26 : 0;
+  x.fillText(gapLabel(g.d), L - 4, 296); const w = x.measureText(gapLabel(g.d)).width; x.shadowBlur = 0;
+  x.fillStyle = T.accent; x.fillRect(L + w + 6, 226, 30, 74);
+  x.font = F(400, 27); x.fillStyle = T.ink; x.fillText(g.d >= 0 ? "bought before the call." : "bought after the call.", L, 352);
+  x.font = F(400, 19); x.fillStyle = T.muted; x.fillText("call  " + utc(g.tt), L, 410); x.fillText("buy   " + utc(g.bt), L, 440);
+  x.fillStyle = T.line; x.fillRect(L, 488, 640, 1.5);
+  x.font = F(500, 21); x.fillStyle = T.ink; x.fillText("their entry. not your exit.", L, 528);
+  x.fillStyle = T.accent; x.textAlign = "right"; x.fillText(CONFIG.ticker, L + 640, 528); x.textAlign = "left";
+  if (isExample) { x.font = F(400, 15); x.fillStyle = T.muted; x.fillText("example · not a real call", L, 568); }
+}
+$("#save").onclick = () => $("#card").toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "entry-gap.png"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); });
+
+// ---------- gap board ----------
+function renderBoard(list, preview) {
+  const max = Math.max(...list.map(r => r.med), 1);
+  $("#board").innerHTML = `<div class="hd"><span>kol</span><span>calls</span><span>median gap</span><span class="hide">longest</span><span class="hide">before the call →</span></div>` +
+    list.map(r => `<div class="r"><span>${esc(r.handle)}</span><span class="mut">${r.n}</span><span class="${r.med >= 0 ? "acc" : ""}">${gapLabel(r.med)}</span><span class="hide mut">${gapLabel(r.max)}</span>` +
+      `<span class="hide"><span class="bar" style="display:block;width:${Math.max(3, r.med / max * 100)}%"></span></span></div>`).join("");
+  const L = $("#bLamp"); L.className = "lamp" + (preview ? "" : " live"); L.textContent = preview ? "preview" : `from the chain · ${list.reduce((s, r) => s + r.n, 0)} calls`;
+}
+async function buildBoard() {
+  const calls = CONFIG.calls.filter(c => postTime(c.tweet) && sigOf(c.tx));
+  if (!calls.length) { const m = 60000;
+    return renderBoard([["kol 01", 14, 22 * m, 71 * m], ["kol 04", 9, 16 * m, 48 * m], ["kol 02", 21, 11 * m, 39 * m], ["kol 07", 6, 7 * m, 19 * m], ["kol 05", 12, 3 * m, 12 * m], ["kol 03", 8, -2 * m, 4 * m]]
+      .map(([handle, n, med, max]) => ({ handle, n, med, max })), true); }
+  const cache = store.get("gaps", {}), by = {};
+  for (const c of calls) { const sig = sigOf(c.tx); let bt = cache[sig];
+    if (!bt) { try { bt = (await buyTime(sig)).t; cache[sig] = bt; store.set("gaps", cache); } catch {} await sleep(300); }
+    if (bt) (by[c.handle] ||= []).push(postTime(c.tweet) - bt); }
+  const med = a => { const s = [...a].sort((p, q) => p - q), h = s.length >> 1; return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2; };
+  const list = Object.entries(by).map(([handle, a]) => ({ handle, n: a.length, med: med(a), max: Math.max(...a) })).sort((a, b) => b.med - a.med);
+  list.length ? renderBoard(list, false) : renderBoard([], true);
+}
+buildBoard();
+$("#example").click(); // show the tool working on first view (labelled as an example)
+
+// ---------- the desk (beta) ----------
+const desk = Object.assign({ follow: "fastest gap", tp: "3x", exit: "when they sell", size: .5, max: 6, armed: false }, store.get("desk", {}));
+$$("[data-g]").forEach(gr => { const key = gr.dataset.g;
+  gr.querySelectorAll(".chip").forEach(b => { b.classList.toggle("on", b.textContent === desk[key]);
+    b.onclick = () => { desk[key] = b.textContent; gr.querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === b)); deskChanged(); }; }); });
+$("#dSize").value = desk.size; $("#dMax").value = desk.max;
+$("#dSize").oninput = e => { desk.size = +e.target.value; deskChanged(); };
+$("#dMax").oninput = e => { desk.max = +e.target.value; deskChanged(); };
+$("#arm").onclick = () => { desk.armed = !desk.armed; deskChanged(); };
+function deskChanged() {
+  $("#dSizeO").textContent = desk.size.toFixed(2) + " SOL"; $("#dMaxO").textContent = desk.max + (desk.max === 1 ? " entry" : " entries");
+  $("#arm").textContent = desk.armed ? "disarm" : "arm the desk"; const L = $("#dLamp"); L.className = "lamp" + (desk.armed ? " live" : ""); L.textContent = desk.armed ? "armed · beta" : "beta";
+  store.set("desk", desk);
+  const slug = s => s.replace(/ /g, "-"), cmd = `entry desk ${desk.armed ? "--arm" : "--dry"} --follow ${slug(desk.follow)} --size ${desk.size.toFixed(2)} --tp ${desk.tp} --exit ${slug(desk.exit)} --max ${desk.max}`;
+  const sim = [["14:02:07", "in", "kol 03", "0"], ["14:31:50", "out", "kol 03", "+38%"], ["15:10:22", "in", "kol 05", "0"], ["15:12:01", "out", "kol 05", "−12%"], ["16:44:19", "in", "kol 01", "0"]];
+  $("#dOut").innerHTML = `<div><span class="mut">anon@entry ~ %</span> ${esc(cmd)}</div>` +
+    `<div><span class="acc">✓</span> follow ${esc(desk.follow)}</div><div><span class="acc">✓</span> ${desk.size.toFixed(2)} SOL an entry · max ${desk.max} a day</div>` +
+    `<div><span class="acc">✓</span> out ${desk.exit === "when they sell" ? "the second they sell" : "at take profit"}${desk.tp !== "none" ? " · tp " + desk.tp : ""}</div>` +
+    `<div>${desk.armed ? `<span class="acc">◉</span> armed. executes when beta opens · no funds move` : `<span class="mut">○ not armed</span>`}</div>` +
+    `<div class="mut" style="margin-top:10px"># what it would have done today <span class="pv">preview</span></div>` +
+    sim.map(([t, k, who, r]) => `<div><span class="mut">${t}</span>  ${k === "in" ? `<span class="acc">in </span>` : `<span class="${r.startsWith("+") ? "acc" : "red"}">out</span>`} ${who} · ${k === "in" ? desk.size.toFixed(2) + " SOL at their price" : (desk.exit === "when they sell" ? "they sold · " : "tp · ") + r}</div>`).join("");
+}
+deskChanged();
+
+// ---------- pinned steps ----------
+function steps() { const s = $("#how"), r = s.getBoundingClientRect(), span = r.height - innerHeight;
+  const p = span > 0 ? Math.min(1, Math.max(0, -r.top / span)) : 1, n = Math.min(5, Math.floor(p * 5.999));
+  $$("#steplist li").forEach((li, i) => li.classList.toggle("on", i < n));
+  $$("#stepterm .ln").forEach((li, i) => li.classList.toggle("on", i < n)); $("#stepn").textContent = n; }
+addEventListener("scroll", steps, { passive: true }); steps();
+
+// ---------- top bar + active nav ----------
+const secs = $$("section.s");
+addEventListener("scroll", () => { $("#top").classList.toggle("solid", scrollY > 10);
+  const cur = secs.filter(s => s.getBoundingClientRect().top < innerHeight * .4).pop();
+  $$(".nav a").forEach(a => a.classList.toggle("on", cur && a.getAttribute("href") === "#" + cur.id)); }, { passive: true });
+</script>
+</body></html>
