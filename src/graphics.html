@@ -24,9 +24,8 @@ body{background:#777;font-family:"JetBrains Mono",monospace;display:flex;flex-di
 .chip{display:inline-block;padding:0 .55em;margin-right:.35em;line-height:1.55}
 .chip.on{background:var(--accent);color:var(--bg)}
 .row b{display:inline-block;width:2.4em;font-weight:700}
-.L-mono .p0{font-size:21px} .L-mono .big{font-size:84px;font-weight:500;letter-spacing:-.02em;margin-top:6px;white-space:nowrap} .L-mono .sub{font-size:19px;margin-top:16px}
 .L-term .p0{font-size:20px} .L-term .big{font-weight:500;letter-spacing:-.02em;margin-top:8px;white-space:nowrap;line-height:1.05} .L-term .sub{font-size:19px;margin-top:16px}
-.f>.bterm{position:absolute;right:50px;top:50%;transform:translateY(-50%);width:380px;font-size:16px;margin:0}
+.f>.bterm{position:absolute;right:50px;top:50%;transform:translateY(-50%);min-width:360px;max-width:560px;font-size:16px;margin:0}
 .bterm .body div{white-space:pre}
 .L-big .eyebrow{font-family:Silkscreen;font-size:15px;letter-spacing:.12em}
 .L-big .tag{font-family:Silkscreen;font-size:34px;margin-top:22px;white-space:nowrap}
@@ -55,7 +54,7 @@ body{background:#777;font-family:"JetBrains Mono",monospace;display:flex;flex-di
 const C = Object.assign({
   ticker:"$OCT", theme:"paper", user:"anon", host:"oct-lab", object:"computer",
   command:"onchain trading", sub:"every coin trades for its holders.",
-  layout:"readme", decor:[], glow:null,
+  layout:"term", decor:[], glow:null, bannerTerm:null,
   list:[], chips:null, split:null, eyebrow:"", tag:"",
   launch:{ cmd:"", lines:[], window:"" },
 }, window.CFG || {});
@@ -118,10 +117,12 @@ function place(f, ctx, obj, cell, cx, cy, opts = {}) { // draw object with its c
     fit(f.querySelector(".p1"), 1440 - L0, 40, 26);
   } else { // term (default): command left, a terminal with the product's story on the right
     const B = C.bannerTerm || { window: (C.launch.window || C.host + " — zsh"), lines: (C.launch.lines || []).map(l => ["", "✓", l, "acc"]) };
-    const rows = B.lines.map(([t, k, txt, cls]) => `<div>${t ? `<span class="mut">${esc(t)}</span>  ` : ""}<span class="${cls || "ink"}">${esc(k)}</span> ${esc(txt)}</div>`).join("");
-    f.insertAdjacentHTML("beforeend", `<div class="txt" style="left:${L0}px;right:${1500 - 1010}px"><div class="p0">${prompt}</div><div class="big">${esc(C.command)}<span class="cur"></span></div><div class="sub mut">${esc(C.sub)}</div></div>
+    const kw = Math.max(...B.lines.map(l => l[1].trim().length));
+    const rows = B.lines.map(([t, k, txt, cls]) => `<div>${t ? `<span class="mut">${esc(t)}</span>  ` : ""}<span class="${cls || "ink"}">${esc(k.trim().padEnd(kw))}</span> ${esc(txt)}</div>`).join("");
+    f.insertAdjacentHTML("beforeend", `<div class="txt" style="left:${L0}px"><div class="p0">${prompt}</div><div class="big">${esc(C.command)}<span class="cur"></span></div><div class="sub mut">${esc(C.sub)}</div></div>
       <div class="term bterm"><div class="bar"><i></i><i></i><i></i><span class="mut">${esc(B.window)}</span></div><div class="body">${rows}</div></div>`);
-    fit(f.querySelector(".big"), 1010 - L0, 64);
+    const cl = f.querySelector(".bterm").offsetLeft, txt = f.querySelector(".txt"); txt.style.right = (1500 - cl + 40) + "px";
+    fit(f.querySelector(".big"), cl - 40 - L0, 64);
   }
 }
 
