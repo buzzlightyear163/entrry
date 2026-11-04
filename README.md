@@ -31,6 +31,6 @@ GitHub → Vercel, Framework: **Other**, no build command, output = repo root.
 ## Check after deploy
 
 1. Fonts: JetBrains Mono loads (Google Fonts).
-2. X preview: paste the URL in a draft post. If the card has no image, change `og:image` and `twitter:image` to the full URL (`https://yourdomain/og.png`).
+2. X preview: paste the URL in a draft post. If the card has no image, change `og:image` and `twitter:image` (now `https://entrry.vercel.app/og.png`) to your own domain when you add one.
 3. Live data: add a wallet that trades often under "watch" and confirm the lamp goes `live`.
 4. After launch: set `ca`, connect a holder wallet, confirm the lock goes `open`.
