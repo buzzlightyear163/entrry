@@ -3,7 +3,7 @@
  "theme": "graphite",
  "user": "anon",
  "host": "entry",
- "object": "watch",
+ "object": "watch2",
  "command": "before the tweet",
  "sub": "their entry. not your exit.",
  "layout": "term",
@@ -79,5 +79,13 @@
     "red"
    ]
   ]
+ },
+ "objTheme": {
+  "screen": "#efe7d8",
+  "slot": "#d9cfbb",
+  "glow": "#131210",
+  "dark": "#8b8474",
+  "shade": "#c9bfa9",
+  "glowBlur": 0
  }
 }

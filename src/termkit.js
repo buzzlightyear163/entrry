@@ -188,6 +188,42 @@ const TK = (() => {
       g.outline();
       return g;
     },
+    // ENTRY v2: a finer stopwatch. The hand sits 14 minutes before twelve (the call), the wedge between is their head start.
+    watch2({ text = "+14M", gap = 15 } = {}) {
+      const W = 58, H = 66, g = Grid(W, H), cx = 29, cy = 38, r = 25.5;
+      // crown: knurled cap on a stem
+      g.rect(24, 1, 10, 5, "body"); g.rect(24, 1, 10, 1, "hi"); g.rect(24, 5, 10, 1, "shade");
+      for (let x = 25; x < 33; x += 2) g.rect(x, 2, 1, 3, "shade");
+      g.rect(26, 6, 6, 6, "shade"); g.rect(26, 6, 2, 6, "body");
+      // pusher at 1:30
+      g.rect(46, 13, 4, 4, "body"); g.rect(46, 13, 4, 1, "hi"); g.rect(49, 13, 1, 4, "shade"); g.rect(44, 16, 3, 3, "shade");
+      // case, inner ring, face
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const dx = x + .5 - cx, dy = y + .5 - cy, d = Math.hypot(dx, dy); if (d > r) continue;
+        if (d > r - 3) g.set(x, y, dx + dy < -6 ? "hi" : dx + dy > 6 ? "shade" : "body");
+        else if (d > r - 4.4) g.set(x, y, "dark");
+        else g.set(x, y, "screen");
+      }
+      const ang = m => (m / 60) * Math.PI * 2;                     // minutes -> radians, 0 at twelve, clockwise
+      const at = (m, rr) => [Math.floor(cx + Math.sin(ang(m)) * rr), Math.floor(cy - Math.cos(ang(m)) * rr)];
+      // the wedge: their head start, from the hand back up to twelve
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const dx = x + .5 - cx, dy = y + .5 - cy, d = Math.hypot(dx, dy); if (d < 2.5 || d > r - 6.2) continue;
+        let a = Math.atan2(dx, -dy); if (a < 0) a += Math.PI * 2;
+        if (a >= ang(60 - gap)) g.set(x, y, "slot");
+      }
+      // minute ticks: every 5 long, the rest short
+      for (let m = 0; m < 60; m++) { const long = m % 5 === 0;
+        for (let k = 0; k < (long ? 3 : 1); k++) { const [x, y] = at(m, r - 5.4 - k); g.set(x, y, m === 0 ? "red" : long ? "shade" : "dark"); } }
+      // readout below the hub
+      if (text) { const k = text.length > 3 ? 1 : 2, tw = textWidth(text, k); g.text(text, Math.round(cx - tw / 2), cy + (k === 2 ? 5 : 7), "glow", k); }
+      // hand: from the hub to 60 - gap
+      for (let k = 0; k <= r - 7; k += .25) { const [x, y] = at(60 - gap, k); g.set(x, y, "glow"); g.set(x, y - 1, "glow"); }
+      g.rect(cx - 2, cy - 2, 4, 4, "glow"); g.set(cx - 2, cy - 2, "screen"); g.set(cx + 1, cy - 2, "screen"); g.set(cx - 2, cy + 1, "screen"); g.set(cx + 1, cy + 1, "screen");
+      g.rect(cx - 1, cy - 1, 2, 2, "red");
+      g.outline();
+      return g;
+    },
     // ENTRY: a lit emergency-exit style sign that says ENTRY. Hangs from two thin rods.
     sign() {
       const W = 46, H = 28, g = Grid(W, H);

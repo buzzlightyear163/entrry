@@ -223,7 +223,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
 <script src="termkit.js"></script>
 <script>
 const CONFIG = {
-  ca: "HXGLhzcAKNZoqsTNscZP1pbeG85UxxZhon3G4U1hpump", x: "https://x.com/", dexscreener: "", site: "https://entrry.vercel.app", ticker: "$ENTRY", object: "watch", theme: document.documentElement.dataset.theme,
+  ca: "HXGLhzcAKNZoqsTNscZP1pbeG85UxxZhon3G4U1hpump", x: "https://x.com/", dexscreener: "", site: "https://entrry.vercel.app", ticker: "$ENTRY", object: "watch2", theme: document.documentElement.dataset.theme,
   holderMin: 500000,                                   // $ENTRY a wallet needs to open the feed
   rpc: ["https://solana-rpc.publicnode.com", "https://api.mainnet-beta.solana.com"], // free, no keys. Put your own first if you get one.
   // Only wallets the KOL has shown publicly, or that are publicly tied to them.
@@ -236,6 +236,7 @@ const CONFIG = {
   ],
 };
 const T = TK.THEMES[CONFIG.theme];
+const OT = Object.assign({}, T, { screen: "#efe7d8", slot: "#d9cfbb", glow: "#131210", dark: "#8b8474", shade: "#c9bfa9", glowBlur: 0 }); // white-face stopwatch
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
@@ -259,7 +260,7 @@ $("#xlink").href = CONFIG.x;
 
 // ---------- logo + hero object + background line ----------
 { const g = TK.OBJECTS[CONFIG.object]({ ticker: CONFIG.ticker }), c = $("#logo"), k = 2;
-  c.width = g.w * k; c.height = g.h * k; const x = c.getContext("2d"); TK.draw(x, g, { theme: T, cell: k, x: 0, y: 0, shadow: false });
+  c.width = g.w * k; c.height = g.h * k; const x = c.getContext("2d"); TK.draw(x, g, { theme: OT, cell: k, x: 0, y: 0, shadow: false });
   c.style.width = Math.round(26 * g.w / g.h) + "px"; }
 function drawHero() {
   const hero = $("#hero"), c = $("#heroBg"), d = devicePixelRatio || 1, r = hero.getBoundingClientRect(), a = $("#heroVis").getBoundingClientRect();
@@ -268,7 +269,7 @@ function drawHero() {
   const mob = matchMedia("(max-width:860px)").matches, ah = mob ? a.height - $("#heroVis .term").offsetHeight - 24 : a.height;
   const cell = Math.max(3, Math.floor(Math.min(a.width * .7 / g.w, ah * (mob ? .9 : .7) / g.h)));
   const ox = a.left - r.left + (a.width - g.w * cell) * (mob ? .5 : .12), oy = a.top - r.top + (ah - g.h * cell) * (mob ? .5 : .1);
-  TK.draw(x, g, { theme: T, cell, x: ox, y: oy, shadowLen: 1600 });
+  TK.draw(x, g, { theme: OT, cell, x: ox, y: oy, shadowLen: 1600 });
 }
 drawHero(); addEventListener("resize", drawHero); document.fonts.ready.then(drawHero);
 function drawBg() { const c = $("#bgtape"), d = devicePixelRatio || 1; c.width = innerWidth * d; c.height = 140 * d;
@@ -401,7 +402,7 @@ async function drawCard(g) {
   const F = (w, s) => `${w} ${s}px "JetBrains Mono", ui-monospace, monospace`;
   x.fillStyle = T.bg; x.fillRect(0, 0, 1200, 630); x.fillStyle = "rgba(255,255,255,.05)";
   for (let yy = 11; yy < 630; yy += 22) for (let xx = 11; xx < 1200; xx += 22) x.fillRect(xx, yy, 2, 2);
-  const o = TK.OBJECTS[CONFIG.object]({ ticker: CONFIG.ticker }); TK.draw(x, o, { theme: T, cell: 8, x: 84, y: 140, shadowLen: 900 });
+  const o = TK.OBJECTS[CONFIG.object]({ ticker: CONFIG.ticker }); TK.draw(x, o, { theme: OT, cell: 5, x: 110, y: 150, shadowLen: 900 });
   const L = 500; x.textBaseline = "alphabetic";
   x.font = F(400, 22); x.fillStyle = T.muted; x.fillText("anon@entry ~ % entry gap", L, 196);
   x.font = F(500, 92); x.fillStyle = g.d >= 0 ? T.accent : T.ink; x.shadowColor = T.accent; x.shadowBlur = g.d >= 0 ? 26 : 0;

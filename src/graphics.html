@@ -58,7 +58,7 @@ const C = Object.assign({
   list:[], chips:null, split:null, eyebrow:"", tag:"",
   launch:{ cmd:"", lines:[], window:"" },
 }, window.CFG || {});
-const T = TK.THEMES[C.theme];
+const T = TK.THEMES[C.theme], OT = Object.assign({}, T, C.objTheme || {});
 const esc = s => String(s).replace(/[&<>]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
 const tick = C.ticker.replace(/^\$/,"");
 const glowOn = C.glow ?? (C.theme === "phosphor");          // text glow: phosphor only
@@ -90,7 +90,7 @@ function decor(f, ctx, W, H, x0 = .35, x1 = 1) { // dots fill x0..x1 of the widt
 
 function place(f, ctx, obj, cell, cx, cy, opts = {}) { // draw object with its center at (cx, cy)
   const g = TK.OBJECTS[obj]({ ticker: C.ticker });
-  return TK.draw(ctx, g, Object.assign({ theme: T, cell, x: cx - g.w * cell / 2, y: cy - g.h * cell / 2 }, opts));
+  return TK.draw(ctx, g, Object.assign({ theme: OT, shadowColor: T.shadow, cell, x: cx - g.w * cell / 2, y: cy - g.h * cell / 2 }, opts));
 }
 
 // ---- PFP ----
@@ -138,7 +138,7 @@ for (const f of [launch, og]) { const s = f.id === "og" ? .75 : 1, W = 1600 * s,
 }
 // ---- FAVICON (object only, no shadow) ----
 { const ctx = TK.canvasFor(fav), g = TK.OBJECTS[C.object]({ ticker: C.ticker }), cell = Math.floor(150 / Math.max(g.w, g.h));
-  TK.draw(ctx, g, { theme: T, cell, x: (180 - g.w * cell) / 2, y: (180 - g.h * cell) / 2, shadow: false }); }
+  TK.draw(ctx, g, { theme: OT, cell, x: (180 - g.w * cell) / 2, y: (180 - g.h * cell) / 2, shadow: false }); }
 document.fonts.ready.then(() => document.body.dataset.ready = 1);
 </script>
 </body></html>
